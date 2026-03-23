@@ -555,7 +555,7 @@ export default function DashboardPage() {
                   <NiftyChart data={marketData.nifty.historical} name="NIFTY 50" />
                 ) : (
                   <div className="h-48 flex items-center justify-center text-sm" style={{ color: "var(--text-muted)" }}>
-                    Chart data unavailable — add your API keys to see live data
+                    Chart data unavailable right now
                   </div>
                 )}
 
