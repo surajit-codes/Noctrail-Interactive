@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getGeminiModel } from "@/lib/gemini";
-import { supabaseAdmin } from "@/lib/supabase";
-import type { BriefingData } from "@/lib/supabase";
+import { upsertDailyBriefing } from "@/lib/firebaseAdmin";
+import type { BriefingData } from "@/lib/briefingTypes";
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
@@ -155,14 +155,15 @@ export async function POST(request: NextRequest) {
       briefing.generated_at = new Date().toISOString();
     }
 
-    // 3. Save to Supabase (upsert by date)
+    // 3. Save to Firestore (upsert by date)
     const todayDate = new Date().toISOString().split("T")[0];
-    const { error: dbError } = await supabaseAdmin
-      .from("daily_briefings")
-      .upsert({ date: todayDate, briefing }, { onConflict: "date" });
 
-    if (dbError) {
-      console.error("Supabase upsert error:", dbError);
+    let saved = true;
+    try {
+      await upsertDailyBriefing(todayDate, briefing);
+    } catch (dbErr) {
+      saved = false;
+      console.error("Firestore upsert error:", dbErr);
       // Don't fail — return the briefing even if save fails
     }
 
@@ -179,7 +180,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       date: todayDate,
-      saved: !dbError,
+      saved,
       briefing,
     });
   } catch (err) {

@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server";
 import yahooFinance from "yahoo-finance2";
 
-interface OHLCVRow {
-  date: Date;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
+type ChartQuote = { date: Date; close: number };
+
+function isChartQuoteWithClose(q: unknown): q is ChartQuote {
+  if (!q || typeof q !== "object") return false;
+  const candidate = q as { date?: unknown; close?: unknown };
+  return candidate.date instanceof Date && typeof candidate.close === "number";
 }
 
 export async function GET() {
+  // yahoo-finance2 v2+ exports a class; you must instantiate it before calling methods.
+  // Otherwise you get: "Call `const yahooFinance = new YahooFinance()` first..."
+  const yf = new yahooFinance();
+
   const results: Record<string, unknown> = {};
   const errors: string[] = [];
 
@@ -20,23 +23,22 @@ export async function GET() {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 30);
 
-    const niftyRaw = await yahooFinance.historical("^NSEI", {
+    // `historical()` is strict about nulls and can throw for some index symbols.
+    // `chart()` is more tolerant; we filter out null closes ourselves.
+    const niftyRaw = await yf.chart("^NSEI", {
       period1: startDate,
       period2: endDate,
       interval: "1d",
     });
-    const niftyHistorical = niftyRaw as unknown as OHLCVRow[];
+
+    const niftyHistorical = ((niftyRaw?.quotes ?? []) as unknown[]).filter(isChartQuoteWithClose);
 
     results.nifty = {
       symbol: "^NSEI",
       name: "NIFTY 50",
       historical: niftyHistorical.slice(-20).map((d) => ({
         date: d.date.toISOString().split("T")[0],
-        open: d.open,
-        high: d.high,
-        low: d.low,
         close: d.close,
-        volume: d.volume,
       })),
       current_price: niftyHistorical[niftyHistorical.length - 1]?.close ?? null,
     };
@@ -51,23 +53,19 @@ export async function GET() {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 30);
 
-    const sensexRaw = await yahooFinance.historical("^BSESN", {
+    const sensexRaw = await yf.chart("^BSESN", {
       period1: startDate,
       period2: endDate,
       interval: "1d",
     });
-    const sensexHistorical = sensexRaw as unknown as OHLCVRow[];
+    const sensexHistorical = ((sensexRaw?.quotes ?? []) as unknown[]).filter(isChartQuoteWithClose);
 
     results.sensex = {
       symbol: "^BSESN",
       name: "BSE SENSEX",
       historical: sensexHistorical.slice(-20).map((d) => ({
         date: d.date.toISOString().split("T")[0],
-        open: d.open,
-        high: d.high,
-        low: d.low,
         close: d.close,
-        volume: d.volume,
       })),
       current_price: sensexHistorical[sensexHistorical.length - 1]?.close ?? null,
     };
@@ -86,7 +84,7 @@ export async function GET() {
   const spot: Record<string, unknown> = {};
   for (const { symbol, key, name } of spotSymbols) {
     try {
-      const quote = await yahooFinance.quote(symbol);
+      const quote = await yf.quote(symbol);
       const q = quote as Record<string, unknown>;
       spot[key] = {
         symbol,

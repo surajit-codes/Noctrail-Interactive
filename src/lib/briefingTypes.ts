@@ -1,18 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
-
-export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder"
-);
-
-// Server client (service role) — for API routes that write data
-export const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
-  process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder",
-  { auth: { persistSession: false } }
-);
-
-// Database types
+// Shared data types for the daily CEO briefing.
 export interface DailyBriefing {
   id: string;
   date: string;
@@ -72,3 +58,4 @@ export interface BriefingData {
   };
   executive_summary: string;
 }
+
