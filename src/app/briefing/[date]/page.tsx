@@ -13,7 +13,8 @@ import SentimentGauge from "@/components/SentimentGauge";
 import NiftyChart from "@/components/NiftyChart";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
 import Link from "next/link";
-import { supabase, type BriefingData, type DailyBriefing } from "@/lib/supabase";
+import type { BriefingData } from "@/lib/briefingTypes";
+import { getAllDailyBriefingDates, getDailyBriefingByDate } from "@/lib/firebaseClient";
 
 const containerVariants: Variants = {
   hidden: {},
@@ -57,26 +58,12 @@ export default function BriefingPage() {
     const loadData = async () => {
       setLoading(true);
       try {
-        // Load this specific briefing
-        const { data: row, error } = await supabase
-          .from("daily_briefings")
-          .select("briefing")
-          .eq("date", date)
-          .single();
+        // Load this specific briefing + all dates for prev/next navigation
+        const row = await getDailyBriefingByDate(date);
+        if (row) setBriefing(row.briefing);
 
-        if (!error && row) {
-          setBriefing(row.briefing as BriefingData);
-        }
-
-        // Load all dates for prev/next navigation
-        const { data: dates } = await supabase
-          .from("daily_briefings")
-          .select("date")
-          .order("date", { ascending: false });
-
-        if (dates) {
-          setAllDates(dates.map((d: Pick<DailyBriefing, "date">) => d.date));
-        }
+        const dates = await getAllDailyBriefingDates();
+        setAllDates(dates);
       } catch (err) {
         console.error("Failed to load briefing:", err);
       } finally {

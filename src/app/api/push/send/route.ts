@@ -1,20 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import webpush from "web-push";
-import { supabaseAdmin } from "@/lib/supabase";
-
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY!;
-
-if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(
-    "mailto:admin@briefai.app",
-    VAPID_PUBLIC_KEY,
-    VAPID_PRIVATE_KEY
-  );
-}
+import { deletePushSubscription, listPushSubscriptions } from "@/lib/firebaseAdmin";
 
 export async function POST(request: NextRequest) {
   try {
+    const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
+
     const body = await request.json();
     const { title, body: notifBody } = body;
 
@@ -25,19 +17,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fetch all subscriptions
-    const { data: subscriptions, error: dbError } = await supabaseAdmin
-      .from("push_subscriptions")
-      .select("endpoint, keys");
-
-    if (dbError) {
+    // Configure VAPID per-request so invalid placeholders don't crash builds/module evaluation.
+    try {
+      webpush.setVapidDetails(
+        "mailto:admin@briefai.app",
+        VAPID_PUBLIC_KEY,
+        VAPID_PRIVATE_KEY
+      );
+    } catch (err) {
+      console.error("Invalid VAPID keys:", err);
       return NextResponse.json(
-        { error: "Failed to fetch subscriptions" },
-        { status: 500 }
+        { error: "Invalid VAPID keys" },
+        { status: 503 }
       );
     }
 
-    if (!subscriptions || subscriptions.length === 0) {
+    // Fetch all subscriptions
+    const subscriptions = await listPushSubscriptions();
+
+    if (subscriptions.length === 0) {
       return NextResponse.json({ success: true, sent: 0, message: "No subscribers" });
     }
 
@@ -64,10 +62,7 @@ export async function POST(request: NextRequest) {
           if (typeof err === "object" && err !== null && "statusCode" in err) {
             const webPushErr = err as { statusCode: number };
             if (webPushErr.statusCode === 410) {
-              await supabaseAdmin
-                .from("push_subscriptions")
-                .delete()
-                .eq("endpoint", sub.endpoint);
+              await deletePushSubscription(sub.endpoint);
             }
           }
           throw err;

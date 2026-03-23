@@ -10,7 +10,8 @@ import SignalBadge from "@/components/SignalBadge";
 import SentimentGauge from "@/components/SentimentGauge";
 import NiftyChart from "@/components/NiftyChart";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
-import { supabase, type BriefingData, type DailyBriefing } from "@/lib/supabase";
+import type { BriefingData, DailyBriefing } from "@/lib/briefingTypes";
+import { getDailyBriefingHistory, getLatestDailyBriefing } from "@/lib/firebaseClient";
 import Link from "next/link";
 
 // ─── Animation Variants ────────────────────────────────────────────
@@ -234,44 +235,21 @@ export default function DashboardPage() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // Fetch latest briefing from Supabase
+  // Fetch latest briefing from Firestore
   const fetchBriefing = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from("daily_briefings")
-        .select("*")
-        .order("date", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      console.log("Full briefing object:", JSON.stringify(data, null, 2));
-
-      if (error) {
-        console.warn("Supabase fetch briefing error:", error.message || error);
-        return;
-      }
-      if (data) setBriefing(data.briefing as BriefingData);
+      const latest = await getLatestDailyBriefing();
+      if (latest) setBriefing(latest);
     } catch (err) {
       console.warn("Failed to fetch briefing (likely missing keys):", err);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
   // Fetch history
   const fetchHistory = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from("daily_briefings")
-        .select("id, date, created_at, briefing")
-        .order("date", { ascending: false })
-        .limit(30);
-
-      if (error) {
-        console.warn("Supabase fetch history error:", error.message || error);
-        return;
-      }
-      if (data) setHistory(data as DailyBriefing[]);
+      const rows = await getDailyBriefingHistory(30);
+      setHistory(rows);
     } catch (err) {
       console.warn("Failed to fetch history:", err);
     }
@@ -349,7 +327,7 @@ export default function DashboardPage() {
       const swReg = await navigator.serviceWorker.ready;
       const subscription = await swReg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlB64ToUint8Array(vapidKey) as any,
+        applicationServerKey: urlB64ToUint8Array(vapidKey),
       });
 
       await fetch("/api/push/subscribe", {
@@ -886,9 +864,13 @@ export default function DashboardPage() {
 }
 
 // Helper: base64 to Uint8Array for VAPID
-function urlB64ToUint8Array(base64String: string): Uint8Array {
+function urlB64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
   const rawData = window.atob(base64);
-  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
 }
