@@ -88,9 +88,9 @@ export default function BriefingPage() {
     : "";
 
   return (
-    <div className="relative min-h-screen" style={{ background: "var(--bg-primary)" }}>
+    <div className="main-content relative min-h-screen" style={{ background: "var(--bg-primary)", marginRight: 0 }}>
       <AnimatedGrid />
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 w-full">
         {/* ─── HEADER / BREADCRUMB ─── */}
         <motion.div
           initial={{ opacity: 0, y: -16 }}
