@@ -11,6 +11,7 @@ import {
   limit,
   getDocs,
 } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 import type { BriefingData, DailyBriefing } from "./briefingTypes";
 
@@ -40,6 +41,12 @@ function getFirebaseClientApp() {
 function getDb() {
   return getFirestore(getFirebaseClientApp());
 }
+
+export function getFirebaseAuth() {
+  return getAuth(getFirebaseClientApp());
+}
+
+export const googleProvider = new GoogleAuthProvider();
 
 // Collection layout in Firestore:
 // - `daily_briefings` documents keyed by `date` (YYYY-MM-DD)

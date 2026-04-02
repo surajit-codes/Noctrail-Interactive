@@ -6,7 +6,7 @@ import {
   Activity, AlertTriangle, BarChart3, Bell, BrainCircuit, Briefcase,
   ChevronRight, Clock, CreditCard, Globe, Loader2, RefreshCw,
   Search, TrendingDown, TrendingUp, Zap, ArrowDownLeft, ArrowUpRight,
-  ChevronDown, Moon, RotateCcw, Sun,
+  ChevronDown, Moon, RotateCcw, Sun, LogOut,
 } from "lucide-react";
 import AnimatedGrid from "@/components/AnimatedGrid";
 import GlassCard from "@/components/GlassCard";
@@ -18,6 +18,8 @@ import LoadingSkeleton from "@/components/LoadingSkeleton";
 import type { BriefingData, DailyBriefing } from "@/lib/briefingTypes";
 import { getDailyBriefingHistory, getLatestDailyBriefing } from "@/lib/firebaseClient";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 // ─── Animation Variants ────────────────────────────────────────────
 const containerVariants: Variants = {
@@ -39,7 +41,7 @@ function LiveClock() {
     const tick = () => {
       const now = new Date();
       setTime(now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Asia/Kolkata" }));
-      setDate(now.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }));
+      setDate(now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }));
     };
     tick();
     const id = setInterval(tick, 1000);
@@ -56,19 +58,23 @@ function LiveClock() {
 
 // ─── Top Bar ──────────────────────────────────────────────────────
 function TopBar({
+  userName,
   notifStatus,
   running,
   theme,
   onEnableNotif,
   onRunNow,
   onToggleTheme,
+  onLogOut,
 }: {
+  userName: string | null;
   notifStatus: string;
   running: boolean;
   theme: "dark" | "light";
   onEnableNotif: () => void;
   onRunNow: () => void;
   onToggleTheme: () => void;
+  onLogOut: () => void;
 }) {
   return (
     <header className="topbar">
@@ -98,21 +104,32 @@ function TopBar({
         </div>
 
         {/* Avatar */}
-        <div className="topbar-avatar">
+        <div className="topbar-avatar" style={{ cursor: "default" }}>
           <div style={{
             width: 28, height: 28, borderRadius: 8,
             background: "linear-gradient(135deg, var(--accent-violet), #6d28d9)",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: "0.65rem", fontWeight: 700, color: "white",
           }}>
-            CEO
+            {userName ? userName.charAt(0).toUpperCase() : "U"}
           </div>
           <div>
-            <div className="text-xs font-semibold" style={{ color: "var(--text-primary)", lineHeight: 1.2 }}>BriefAI</div>
-            <div className="text-xs" style={{ color: "var(--text-muted)", lineHeight: 1.2, fontSize: "0.65rem" }}>@dashboard</div>
+            <div className="text-xs font-semibold" style={{ color: "var(--text-primary)", lineHeight: 1.2 }}>{userName || "User"}</div>
+            <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>CEO</div>
           </div>
-          <ChevronDown size={13} style={{ color: "var(--text-muted)" }} />
         </div>
+
+        <div style={{ width: 1, height: 24, background: "var(--border-subtle)", margin: "0 4px" }} />
+
+        <button 
+          onClick={onLogOut} 
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all hover:bg-red-500/20"
+          style={{ background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#ef4444", cursor: "pointer" }}
+          title="Log out"
+        >
+          <LogOut size={14} strokeWidth={2.5} />
+          <span className="text-xs font-bold tracking-wide">LOGOUT</span>
+        </button>
       </div>
     </header>
   );
@@ -386,6 +403,9 @@ function RightPanel({
 
 // ─── Main Dashboard Page ───────────────────────────────────────────
 export default function DashboardPage() {
+  const { user, loading: authLoading, logOut } = useAuth();
+  const router = useRouter();
+
   const [briefing, setBriefing] = useState<BriefingData | null>(null);
   const [marketData, setMarketData] = useState<{
     nifty?: { historical: { date: string; close: number }[]; current_price: number };
@@ -403,6 +423,12 @@ export default function DashboardPage() {
   const [notifStatus, setNotifStatus] = useState<"idle" | "loading" | "enabled" | "denied">("idle");
   const [activeTab, setActiveTab] = useState<"6month" | "1year" | "3month" | "1month">("6month");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") as "dark" | "light" | null;
@@ -479,7 +505,7 @@ export default function DashboardPage() {
       if (res.ok && data.success) {
         await fetchBriefing();
         await fetchHistory();
-        addToast("✅ Morning briefing generated successfully!", "success");
+        addToast("✅ Briefing generated successfully!", "success");
       } else {
         throw new Error(data.details ? `${data.error}: ${data.details}` : data.error ?? "Unknown error");
       }
@@ -520,7 +546,7 @@ export default function DashboardPage() {
         body: JSON.stringify(subscription),
       });
       setNotifStatus("enabled");
-      addToast("🔔 Morning briefing notifications enabled!", "success");
+      addToast("🔔 Briefing notifications enabled!", "success");
     } catch (err) {
       setNotifStatus("idle");
       addToast(`❌ Failed to enable notifications: ${String(err)}`, "error");
@@ -546,7 +572,7 @@ export default function DashboardPage() {
   const niftyChangePct = niftyPrice && niftyStart ? ((niftyPrice - niftyStart) / niftyStart) * 100 : null;
   const niftyIsUp = (niftyChangePct ?? 0) >= 0;
 
-  if (loading) {
+  if (loading || authLoading || (!user && !authLoading)) {
     return (
       <div className="main-content" style={{ zIndex: 1, position: "relative" }}>
         <AnimatedGrid />
@@ -558,6 +584,10 @@ export default function DashboardPage() {
     );
   }
 
+  const currentHour = new Date().getHours();
+  const greeting = currentHour < 12 ? "Good Morning" : currentHour < 18 ? "Good Afternoon" : "Good Evening";
+  const temporalWord = currentHour < 12 ? "morning" : currentHour < 18 ? "afternoon" : "evening";
+
   return (
     <>
       <div className="main-content" style={{ position: "relative" }}>
@@ -566,15 +596,22 @@ export default function DashboardPage() {
 
         {/* Top Bar */}
         <TopBar
+          userName={user?.displayName || null}
           notifStatus={notifStatus}
           running={running}
           theme={theme}
           onEnableNotif={handleEnableNotifications}
           onRunNow={handleRunNow}
           onToggleTheme={toggleTheme}
+          onLogOut={logOut}
         />
 
         <div className="page-content" id="overview" style={{ position: "relative", zIndex: 10 }}>
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold display-font text-white">{greeting}, {user?.displayName || "CEO"}!</h1>
+            <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>Here is your {temporalWord} intelligence briefing.</p>
+          </div>
+
           {!briefing ? (
             /* ─── EMPTY STATE ──────────────────────────────── */
             <motion.div
