@@ -5,7 +5,7 @@ type Momentum = "STRONG" | "MODERATE" | "WEAK";
 
 interface SignalBadgeProps {
   value: Signal | Severity | Urgency | Momentum | string;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
 }
 
 function getClass(value: string): string {
@@ -30,9 +30,9 @@ function getClass(value: string): string {
 
 export default function SignalBadge({ value, size = "sm" }: SignalBadgeProps) {
   const cls = getClass(value);
-  const fontSize = size === "md" ? "text-xs" : "";
+  const fontSize = size === "lg" ? "text-base px-3 py-1" : size === "md" ? "text-xs" : "";
   return (
-    <span className={`${cls} ${fontSize} font-mono`}>
+    <span className={`${cls} ${fontSize} font-mono inline-block`}>
       {value}
     </span>
   );
