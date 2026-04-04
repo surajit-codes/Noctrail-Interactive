@@ -21,7 +21,7 @@ export async function GET() {
   try {
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
+    startDate.setDate(startDate.getDate() - 380);
 
     // `historical()` is strict about nulls and can throw for some index symbols.
     // `chart()` is more tolerant; we filter out null closes ourselves.
@@ -36,7 +36,7 @@ export async function GET() {
     results.nifty = {
       symbol: "^NSEI",
       name: "NIFTY 50",
-      historical: niftyHistorical.slice(-20).map((d) => ({
+      historical: niftyHistorical.map((d) => ({
         date: d.date.toISOString().split("T")[0],
         close: d.close,
       })),
@@ -51,7 +51,7 @@ export async function GET() {
   try {
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 30);
+    startDate.setDate(startDate.getDate() - 380);
 
     const sensexRaw = await yf.chart("^BSESN", {
       period1: startDate,
@@ -63,7 +63,7 @@ export async function GET() {
     results.sensex = {
       symbol: "^BSESN",
       name: "BSE SENSEX",
-      historical: sensexHistorical.slice(-20).map((d) => ({
+      historical: sensexHistorical.map((d) => ({
         date: d.date.toISOString().split("T")[0],
         close: d.close,
       })),

@@ -30,32 +30,38 @@ export interface BriefingData {
     signal: "BUY" | "HOLD" | "AVOID";
     reason: string;
     momentum: "STRONG" | "MODERATE" | "WEAK";
+    url?: string;
   }>;
   business_opportunities: Array<{
     title: string;
     description: string;
     urgency: "HIGH" | "MEDIUM" | "LOW";
     action: string;
+    url?: string;
   }>;
   risk_alerts: Array<{
     title: string;
     description: string;
     severity: "HIGH" | "MEDIUM" | "LOW";
     mitigation: string;
+    url?: string;
   }>;
   vc_funding_highlights: Array<{
     company: string;
     amount: string;
     sector: string;
     insight: string;
+    url?: string;
   }>;
   world_impact: {
     summary: string;
     key_events: Array<{
       event: string;
       impact: "POSITIVE" | "NEGATIVE" | "NEUTRAL";
+      url?: string;
     }>;
   };
   executive_summary: string;
+  executive_summary_url?: string;
 }
 

@@ -57,7 +57,7 @@ ${JSON.stringify(markets, null, 2)}
 === CURRENCY DATA ===
 ${JSON.stringify(currency, null, 2)}
 
-=== NEWS HEADLINES ===
+=== NEWS HEADLINES WITH URLS ===
 ${JSON.stringify(news, null, 2)}
 
 === TASK ===
@@ -84,34 +84,35 @@ Return a single JSON object that EXACTLY matches this schema (no extra fields, n
     "usd_inr": { "outlook": "STRENGTHENING" | "WEAKENING" | "STABLE", "insight": "<1-2 sentence analysis>" }
   },
   "top_sectors": [
-    { "name": "<sector name>", "signal": "BUY" | "HOLD" | "AVOID", "reason": "<1 sentence>", "momentum": "STRONG" | "MODERATE" | "WEAK" }
+    { "name": "<sector name>", "signal": "BUY" | "HOLD" | "AVOID", "reason": "<1 sentence>", "momentum": "STRONG" | "MODERATE" | "WEAK", "url": "<source news url>" }
   ],
   "business_opportunities": [
-    { "title": "<short title>", "description": "<2-3 sentences>", "urgency": "HIGH" | "MEDIUM" | "LOW", "action": "<specific action to take now>" }
+    { "title": "<short title>", "description": "<2-3 sentences>", "urgency": "HIGH" | "MEDIUM" | "LOW", "action": "<specific action to take now>", "url": "<source news url>" }
   ],
   "risk_alerts": [
-    { "title": "<short title>", "description": "<2-3 sentences>", "severity": "HIGH" | "MEDIUM" | "LOW", "mitigation": "<specific protective action>" }
+    { "title": "<short title>", "description": "<2-3 sentences>", "severity": "HIGH" | "MEDIUM" | "LOW", "mitigation": "<specific protective action>", "url": "<source news url>" }
   ],
   "vc_funding_highlights": [
-    { "company": "<company name>", "amount": "<funding amount>", "sector": "<sector>", "insight": "<1-2 sentences on market implications>" }
+    { "company": "<company name>", "amount": "<funding amount>", "sector": "<sector>", "insight": "<1-2 sentences on market implications>", "url": "<source news url>" }
   ],
   "world_impact": {
     "summary": "<3-4 sentences on how global events affect Indian business today>",
     "key_events": [
-      { "event": "<event name>", "impact": "POSITIVE" | "NEGATIVE" | "NEUTRAL" }
+      { "event": "<event name>", "impact": "POSITIVE" | "NEGATIVE" | "NEUTRAL", "url": "<source news url>" }
     ]
   },
-  "executive_summary": "<5-6 sentence plain-English briefing written directly to a busy Indian CEO or entrepreneur, mentioning specific numbers>"
+  "executive_summary": "<5-6 sentence plain-English briefing written directly to a busy Indian CEO or entrepreneur, mentioning specific numbers>",
+  "executive_summary_url": "<url to the most significant news of the day>"
 }
 
 Rules:
 - top_sectors: provide exactly 6 sectors
 - business_opportunities: provide 3-4 items
 - risk_alerts: provide 3-4 items
-- vc_funding_highlights: provide based on news data, minimum 2 items (fabricate plausible ones if no data available)
+- vc_funding_highlights: provide based on news data, minimum 2 items (fabricate plausible ones if no data available, use a generic relevant business news link if fabricating)
 - world_impact.key_events: provide 3-5 events
+- URLs: For EACH item, provide the most relevant 'url' from the 'NEWS HEADLINES WITH URLS' data provided above. DO NOT fabricate URLs. If no news is perfectly relevant, use the URL of the most significant general business news from the list.
 - Be specific with numbers (mention actual NIFTY/SENSEX levels, Gold prices, etc.)
-- If any data source has an error field, use your knowledge of recent Indian markets to fill in reasonable estimates
 `.trim();
 }
 

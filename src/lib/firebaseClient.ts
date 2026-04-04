@@ -5,11 +5,14 @@ import {
   getFirestore,
   doc,
   getDoc,
+  setDoc,
   collection,
   query,
   orderBy,
   limit,
   getDocs,
+  getDocFromServer,
+  getDocsFromServer,
 } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
@@ -61,7 +64,8 @@ export async function getLatestDailyBriefing(): Promise<BriefingData | null> {
     limit(1)
   );
 
-  const snap = await getDocs(q);
+  // Always fetch fresh data from server, bypassing Firestore local cache
+  const snap = await getDocsFromServer(q);
   if (snap.empty) return null;
 
   const docSnap = snap.docs[0]!;
@@ -72,7 +76,8 @@ export async function getLatestDailyBriefing(): Promise<BriefingData | null> {
 export async function getDailyBriefingByDate(date: string): Promise<DailyBriefing | null> {
   const db = getDb();
   const docRef = doc(db, DAILY_BRIEFINGS_COLLECTION, date);
-  const docSnap = await getDoc(docRef);
+  // Bypass cache — always fetch from Firestore server
+  const docSnap = await getDocFromServer(docRef);
   if (!docSnap.exists()) return null;
 
   const data = docSnap.data() as {
@@ -133,5 +138,28 @@ export async function getAllDailyBriefingDates(): Promise<string[]> {
   return snap.docs
     .map((d) => (d.data() as { date?: string }).date ?? d.id)
     .filter(Boolean);
+}
+
+export interface PortfolioItem {
+  id: string; // Ticker symbol e.g., 'RELIANCE'
+  name: string;
+  shares: number;
+  avgPrice: number;
+  currentPrice: number;
+}
+
+export async function getUserPortfolio(uid: string): Promise<PortfolioItem[]> {
+  const db = getDb();
+  const docRef = doc(db, "users", uid, "data", "portfolio");
+  const snap = await getDoc(docRef);
+  if (!snap.exists()) return [];
+  const data = snap.data();
+  return (data.items || []) as PortfolioItem[];
+}
+
+export async function updateUserPortfolio(uid: string, items: PortfolioItem[]): Promise<void> {
+  const db = getDb();
+  const docRef = doc(db, "users", uid, "data", "portfolio");
+  await setDoc(docRef, { items, updated_at: new Date().toISOString() }, { merge: true });
 }
 

@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { BrainCircuit, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import AnimatedGrid from "@/components/AnimatedGrid";
 import Preloader from "@/components/Preloader";
 
@@ -79,15 +80,12 @@ export default function LoginPage() {
     <div className="relative flex h-screen w-full flex-col items-center justify-center p-4 overflow-hidden" style={{ background: "var(--bg-primary)" }}>
       <AnimatedGrid />
       <div className="relative z-10 w-full max-w-sm rounded-[24px] p-8 glass-card border border-[rgba(255,255,255,0.1)] shadow-2xl flex flex-col items-center">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6" style={{
-          background: "linear-gradient(135deg, rgba(139,92,246,0.15), rgba(109,40,217,0.1))",
-          border: "1px solid rgba(139,92,246,0.3)",
-          boxShadow: "0 0 40px rgba(139,92,246,0.2)",
+        <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-4" style={{
+          background: "transparent",
         }}>
-          <BrainCircuit size={32} style={{ color: "var(--accent-violet-light)" }} />
+          <Image src="/logo.svg" alt="BriefAI Logo" width={80} height={80} priority />
         </div>
-        
-        <h1 className="text-2xl font-bold mb-2 display-font text-white">Welcome Back</h1>
+        <h1 className="text-2xl font-bold mb-1 display-font text-white">BriefAI</h1>
         <p className="text-sm text-center mb-8" style={{ color: "var(--text-muted)" }}>
           Sign in to access your CEO dashboard and exclusive market intelligence.
         </p>
