@@ -39,7 +39,9 @@ The platform uses Firebase for authentication and data storage, ensuring secure 
 
 ## 👨‍💻 Developer
 
-**Sayan** - Full-stack developer specializing in AI-powered web applications.
+**Surajit Mondal**
+**Sayandeep Pradhan**
+**Samiran de**
 
 ## 🛠 Tech Stack
 
