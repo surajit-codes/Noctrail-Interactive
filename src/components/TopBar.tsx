@@ -89,7 +89,7 @@ export default function TopBar() {
         </div>
         
         {/* User Avatar */}
-        <div className="topbar-avatar" style={{ cursor: "default" }}>
+        <div className="topbar-avatar" style={{ cursor: "default", background: "var(--bg-card)", borderColor: "var(--border-subtle)" }}>
           <div style={{
             width: 28, height: 28, borderRadius: 8,
             background: "linear-gradient(135deg, var(--accent-violet), #6d28d9)",

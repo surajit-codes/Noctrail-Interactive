@@ -69,13 +69,24 @@
   --accent-purple: #7c3aed;
   --accent-cyan-old: #7c3aed;
 
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
   --text-muted: #64748b;
 
-  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-subtle: rgba(0, 0, 0, 0.1);
   --border-glow: rgba(124, 58, 237, 0.15);
-  --border-glow-strong: rgba(124, 58, 237, 0.3);
+  --border-glow-strong: rgba(124, 58, 237, 0.4);
+}
+
+/* Override for cards in Light Mode to use dark transparency instead of white transparency */
+[data-theme='light'] .glass-card,
+[data-theme='light'] .stat-card {
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+[data-theme='light'] .glass-card:hover,
+[data-theme='light'] .stat-card:hover {
+  background: rgba(124, 58, 237, 0.04);
 }
 
 /* ═══════════════════════════════════════════

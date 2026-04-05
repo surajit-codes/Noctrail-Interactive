@@ -53,7 +53,7 @@ function NavItems({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNaviga
       }}>
         <Image src="/logo.svg" alt="BriefAI" width={32} height={32} style={{ flexShrink: 0 }} />
         {!isCollapsed && (
-          <span className="display-font" style={{ fontSize: "1rem", fontWeight: 700, color: "white", letterSpacing: "0.02em", whiteSpace: "nowrap" }}>
+          <span className="display-font" style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "0.02em", whiteSpace: "nowrap" }}>
             BriefAI
           </span>
         )}
@@ -240,7 +240,7 @@ export function MobileSidebar() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
              <Image src="/logo.svg" alt="Logo" width={28} height={28} />
-             <span className="display-font" style={{ fontWeight: 700, color: "white" }}>BriefAI</span>
+             <span className="display-font" style={{ fontWeight: 700, color: "var(--text-primary)" }}>BriefAI</span>
           </div>
           <button
             onClick={() => setMobileMenuOpen(false)}

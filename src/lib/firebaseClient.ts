@@ -60,7 +60,7 @@ export async function getLatestDailyBriefing(): Promise<BriefingData | null> {
   const db = getDb();
   const q = query(
     collection(db, DAILY_BRIEFINGS_COLLECTION),
-    orderBy("date", "desc"),
+    orderBy("created_at", "desc"),
     limit(1)
   );
 
@@ -100,7 +100,7 @@ export async function getDailyBriefingHistory(limitCount = 30): Promise<DailyBri
   const db = getDb();
   const q = query(
     collection(db, DAILY_BRIEFINGS_COLLECTION),
-    orderBy("date", "desc"),
+    orderBy("created_at", "desc"),
     limit(limitCount)
   );
 

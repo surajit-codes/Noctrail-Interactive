@@ -138,7 +138,7 @@ export default function BriefingPage() {
                         <span className="text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold bg-red-500/10 text-red-500"> {risk.severity}</span>
                      </div>
                      <p className="text-xs text-[var(--text-muted)] mb-3">{risk.description}</p>
-                     <div className="text-xs text-amber-500 bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
+                     <div className="text-xs text-amber-600 bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
                         <strong>Mitigation:</strong> {risk.mitigation}
                      </div>
                   </div>
@@ -192,7 +192,8 @@ export default function BriefingPage() {
                 <input 
                   type="text" 
                   placeholder="Search dates..." 
-                  className="bg-transparent border-none text-xs text-white focus:outline-none w-32"
+                  className="bg-transparent border-none text-xs focus:outline-none w-32"
+                  style={{ color: "var(--text-primary)" }}
                   value={searchHistory}
                   onChange={(e) => setSearchHistory(e.target.value)}
                 />

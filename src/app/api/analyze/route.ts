@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getGeminiModel } from "@/lib/gemini";
-import { upsertDailyBriefing } from "@/lib/firebaseAdmin";
+import { upsertDailyBriefing, getAllUsers } from "@/lib/firebaseAdmin";
 import type { BriefingData } from "@/lib/briefingTypes";
+import { sendBriefingEmail } from "@/lib/email";
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
@@ -168,7 +169,23 @@ export async function POST(request: NextRequest) {
       // Don't fail — return the briefing even if save fails
     }
 
-    // 4. Trigger push notifications (fire and forget)
+    // 4. Trigger email notifications
+    const userEmail = request.headers.get("x-user-email");
+    const isCron = request.headers.get("authorization") === `Bearer ${CRON_SECRET}`;
+
+    if (userEmail) {
+      // Manual trigger: Send to specific user
+      sendBriefingEmail(userEmail, briefing).catch(e => console.warn("Manual email failed:", e));
+    } else if (isCron) {
+      // 8 AM Cron: Send to all users
+      getAllUsers().then(users => {
+        users.forEach(u => {
+          sendBriefingEmail(u.email, briefing, u.name).catch(e => console.warn(`Cron email to ${u.email} failed:`, e));
+        });
+      }).catch(e => console.error("Failed to fetch users for cron emails:", e));
+    }
+
+    // 5. Trigger push notifications (fire and forget)
     fetch(`${baseUrl}/api/push/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

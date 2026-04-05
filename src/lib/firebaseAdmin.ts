@@ -40,18 +40,27 @@ export async function upsertDailyBriefing(date: string, briefing: BriefingData) 
   const db = getAdminDb();
   const createdAt = new Date().toISOString();
 
-  // Use `date` as document id for fast reads (and upsert semantics).
+  // Changed: Use auto-generated ID to preserve history of every run,
+  // but keep the 'date' field for querying latest by day.
   await db
     .collection(DAILY_BRIEFINGS_COLLECTION)
-    .doc(date)
-    .set(
-      {
-        date,
-        briefing,
-        created_at: createdAt,
-      },
-      { merge: true }
-    );
+    .add({
+      date,
+      briefing,
+      created_at: createdAt,
+    });
+}
+
+export async function getAllUsers(): Promise<Array<{ email: string; name?: string }>> {
+  const db = getAdminDb();
+  const snapshot = await db.collection("users").get();
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      email: data.email,
+      name: data.name,
+    };
+  }).filter(u => !!u.email);
 }
 
 export async function upsertPushSubscription(

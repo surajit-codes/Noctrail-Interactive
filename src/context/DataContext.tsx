@@ -195,21 +195,41 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     };
     init();
+
+    // ─── 8 AM IST Auto-Refresh Timer ───
+    const checkTime = () => {
+      const now = new Date();
+      // Indian Standard Time (IST) is UTC+5:30
+      const istTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+      const hours = istTime.getHours();
+      const minutes = istTime.getMinutes();
+      
+      // If it's exactly 8:00 AM (and close enough to it)
+      if (hours === 8 && minutes === 0) {
+        console.log("🌅 8 AM auto-refresh triggered");
+        init(); // Refresh data from Firestore (assuming cron ran)
+      }
+    };
+
+    const timer = setInterval(checkTime, 60000); // Check every minute
+    return () => clearInterval(timer);
   }, [user, fetchBriefing, fetchHistory, fetchMarketData]);
 
   const handleRunNow = async () => {
     setRunning(true);
     addToast("⚡ Generating briefing...", "info");
     try {
-      // Notice: Added bypass header for demo or full analysis 
+      // Pass the user's email so the backend can send a direct notification
       const res = await fetch("/api/analyze", {
         method: "POST",
-        headers: { "x-demo-bypass": "true" },
+        headers: { 
+          "x-demo-bypass": "true",
+          "x-user-email": user?.email ?? ""
+        },
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        await fetchBriefing();
-        await fetchHistory();
+        await Promise.all([fetchBriefing(), fetchHistory()]);
         addToast("✅ Briefing generated successfully!", "success");
       } else {
         throw new Error(data.details ? `${data.error}: ${data.details}` : data.error ?? "Unknown error");
