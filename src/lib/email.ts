@@ -1,10 +1,21 @@
 import { Resend } from 'resend';
 import { BriefingData } from './briefingTypes';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResendClient(): Resend | null {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return null;
+  return new Resend(key);
+}
 
 export async function sendBriefingEmail(to: string, briefing: BriefingData, name?: string) {
   try {
+    const resend = getResendClient();
+    if (!resend) {
+      console.warn("RESEND_API_KEY missing; skipping email send.");
+      return { success: false, error: "RESEND_API_KEY missing" };
+    }
+    const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+
     const today = new Date(briefing.date).toLocaleDateString("en-IN", {
       weekday: "long",
       day: "numeric",
@@ -13,7 +24,7 @@ export async function sendBriefingEmail(to: string, briefing: BriefingData, name
     });
 
     const { data, error } = await resend.emails.send({
-      from: 'BriefAI <onboarding@resend.dev>', // Use verified domain in prod
+      from: `BriefAI <${fromAddress}>`,
       to: [to],
       subject: `🌅 Your CEO Morning Briefing - ${today}`,
       html: `
@@ -56,7 +67,14 @@ export async function sendBriefingEmail(to: string, briefing: BriefingData, name
 
     if (error) {
       console.error("Resend error:", error);
-      return { success: false, error };
+      const message =
+        typeof error === "object" &&
+        error &&
+        "message" in error &&
+        typeof (error as { message?: unknown }).message === "string"
+          ? (error as { message: string }).message
+          : String(error);
+      return { success: false, error: message };
     }
 
     return { success: true, data };

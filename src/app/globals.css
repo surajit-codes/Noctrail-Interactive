@@ -51,12 +51,12 @@
 }
 
 [data-theme='light'] {
-  --bg-primary: #f8fafc;
+  --bg-primary: #f5f7fb;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #f1f5f9;
+  --bg-tertiary: #eef2f7;
   --bg-card: #ffffff;
-  --bg-card-hover: #f1f5f9;
-  --bg-sidebar: #ffffff;
+  --bg-card-hover: #f3f6fb;
+  --bg-sidebar: #fcfdff;
   
   --accent-violet: #7c3aed;
   --accent-violet-light: #8b5cf6;
@@ -69,11 +69,11 @@
   --accent-purple: #7c3aed;
   --accent-cyan-old: #7c3aed;
 
-  --text-primary: #1e293b;
-  --text-secondary: #475569;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
   --text-muted: #64748b;
 
-  --border-subtle: rgba(0, 0, 0, 0.1);
+  --border-subtle: rgba(15, 23, 42, 0.12);
   --border-glow: rgba(124, 58, 237, 0.15);
   --border-glow-strong: rgba(124, 58, 237, 0.4);
 }
@@ -81,12 +81,57 @@
 /* Override for cards in Light Mode to use dark transparency instead of white transparency */
 [data-theme='light'] .glass-card,
 [data-theme='light'] .stat-card {
-  background: rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(15, 23, 42, 0.1);
 }
 [data-theme='light'] .glass-card:hover,
 [data-theme='light'] .stat-card:hover {
-  background: rgba(124, 58, 237, 0.04);
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(124, 58, 237, 0.2);
+}
+
+/* Light mode control polish */
+[data-theme='light'] .topbar-search,
+[data-theme='light'] .topbar-shortcut,
+[data-theme='light'] .topbar-icon-btn,
+[data-theme='light'] .topbar-avatar,
+[data-theme='light'] .time-tabs,
+[data-theme='light'] .btn-secondary {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme='light'] .topbar-icon-btn:hover,
+[data-theme='light'] .btn-secondary:hover {
+  background: rgba(124, 58, 237, 0.08);
+  border-color: rgba(124, 58, 237, 0.3);
+}
+
+/* Light mode compatibility for legacy Tailwind text-white usage */
+[data-theme='light'] :is(h1, h2, h3, h4, h5, h6, p, span, div, td, th, label, li).text-white {
+  color: #000000 !important;
+}
+
+[data-theme='light'] .hover\:text-white:hover {
+  color: #000000 !important;
+}
+
+/* Keep white text where white-on-accent is intended */
+[data-theme='light'] .btn-primary,
+[data-theme='light'] .btn-primary.text-white,
+[data-theme='light'] button.btn-primary.text-white {
+  color: #ffffff !important;
+}
+
+/* Fix auth/modal inputs that use text-white utility classes */
+[data-theme='light'] :is(input, textarea, select).text-white {
+  color: #000000 !important;
+  background: rgba(15, 23, 42, 0.03) !important;
+  border-color: rgba(15, 23, 42, 0.14) !important;
+}
+
+[data-theme='light'] :is(input, textarea, select).text-white::placeholder {
+  color: var(--text-muted) !important;
 }
 
 /* ═══════════════════════════════════════════

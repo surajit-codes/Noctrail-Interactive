@@ -45,21 +45,76 @@ async function fetchData(baseUrl: string) {
   return { markets, news, currency };
 }
 
+function compactForPrompt(markets: unknown, news: unknown, currency: unknown) {
+  const m = (markets ?? {}) as Record<string, unknown>;
+  const n = (news ?? {}) as Record<string, unknown>;
+  const c = (currency ?? {}) as Record<string, unknown>;
+
+  const recentSeries = (indexData: unknown) => {
+    const historical = (indexData as { historical?: unknown[] } | undefined)?.historical;
+    if (!Array.isArray(historical)) return [];
+    return historical.slice(-7);
+  };
+
+  const compactMarkets = {
+    nifty: {
+      current_price: (m.nifty as { current_price?: unknown } | undefined)?.current_price ?? null,
+      recent: recentSeries(m.nifty),
+    },
+    sensex: {
+      current_price: (m.sensex as { current_price?: unknown } | undefined)?.current_price ?? null,
+      recent: recentSeries(m.sensex),
+    },
+    spot: m.spot ?? {},
+  };
+
+  const compactArticles = (bucket: unknown) => {
+    const articles = (bucket as { articles?: Array<Record<string, unknown>> } | undefined)?.articles;
+    if (!Array.isArray(articles)) return [];
+    return articles.slice(0, 3).map((a) => ({
+      title: a.title ?? "",
+      description: typeof a.description === "string" ? a.description.slice(0, 160) : "",
+      source: a.source ?? "",
+      url: a.url ?? "",
+    }));
+  };
+
+  const compactNews = {
+    india_business: compactArticles(n.india_business),
+    global_markets: compactArticles(n.global_markets),
+    startup_vc: compactArticles(n.startup_vc),
+  };
+
+  const compactCurrency = {
+    USD_INR: c.USD_INR ?? null,
+    EUR_INR: c.EUR_INR ?? null,
+    GBP_INR: c.GBP_INR ?? null,
+    JPY_INR: c.JPY_INR ?? null,
+  };
+
+  return { compactMarkets, compactNews, compactCurrency };
+}
+
 // ─── Build Gemini prompt ───────────────────────────────────────────
 function buildPrompt(markets: unknown, news: unknown, currency: unknown): string {
   const todayDate = new Date().toISOString().split("T")[0];
+  const { compactMarkets, compactNews, compactCurrency } = compactForPrompt(
+    markets,
+    news,
+    currency
+  );
 
   return `
 Today's Date: ${todayDate}
 
 === MARKET DATA ===
-${JSON.stringify(markets, null, 2)}
+${JSON.stringify(compactMarkets, null, 2)}
 
 === CURRENCY DATA ===
-${JSON.stringify(currency, null, 2)}
+${JSON.stringify(compactCurrency, null, 2)}
 
 === NEWS HEADLINES WITH URLS ===
-${JSON.stringify(news, null, 2)}
+${JSON.stringify(compactNews, null, 2)}
 
 === TASK ===
 Analyze all the above data and generate a comprehensive CEO Morning Briefing for an Indian business executive.
@@ -173,9 +228,18 @@ export async function POST(request: NextRequest) {
     const userEmail = request.headers.get("x-user-email");
     const isCron = request.headers.get("authorization") === `Bearer ${CRON_SECRET}`;
 
+    let emailStatus:
+      | { attempted: false }
+      | { attempted: true; success: boolean; error?: string } = { attempted: false };
+
     if (userEmail) {
       // Manual trigger: Send to specific user
-      sendBriefingEmail(userEmail, briefing).catch(e => console.warn("Manual email failed:", e));
+      const emailResult = await sendBriefingEmail(userEmail, briefing);
+      emailStatus = {
+        attempted: true,
+        success: emailResult.success,
+        error: emailResult.success ? undefined : String(emailResult.error ?? "Unknown email error"),
+      };
     } else if (isCron) {
       // 8 AM Cron: Send to all users
       getAllUsers().then(users => {
@@ -199,6 +263,7 @@ export async function POST(request: NextRequest) {
       success: true,
       date: todayDate,
       saved,
+      email: emailStatus,
       briefing,
     });
   } catch (err) {

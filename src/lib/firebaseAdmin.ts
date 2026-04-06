@@ -1,9 +1,20 @@
 import admin from "firebase-admin";
 import type { BriefingData } from "./briefingTypes";
+import fs from "node:fs";
+import path from "node:path";
 
 type PushSubscriptionKeys = { p256dh: string; auth: string };
 
 let adminDb: FirebaseFirestore.Firestore | null = null;
+
+function resolveServiceAccountPath(explicitPath?: string): string | null {
+  if (explicitPath && fs.existsSync(explicitPath)) return explicitPath;
+
+  const localPath = path.join(process.cwd(), "service-account.json");
+  if (fs.existsSync(localPath)) return localPath;
+
+  return null;
+}
 
 function getAdminDb(): FirebaseFirestore.Firestore {
   if (adminDb) return adminDb;
@@ -17,15 +28,20 @@ function getAdminDb(): FirebaseFirestore.Firestore {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
-    } else if (googleAppCreds) {
-      // Requires GOOGLE_APPLICATION_CREDENTIALS pointing to a JSON key file.
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-      });
     } else {
-      throw new Error(
-        "Missing Firebase Admin credentials. Set FIREBASE_SERVICE_ACCOUNT_KEY_JSON (JSON string) or GOOGLE_APPLICATION_CREDENTIALS (path)."
+      const serviceAccountPath = resolveServiceAccountPath(googleAppCreds);
+      if (!serviceAccountPath) {
+        throw new Error(
+          "Missing Firebase Admin credentials. Set FIREBASE_SERVICE_ACCOUNT_KEY_JSON or provide a valid GOOGLE_APPLICATION_CREDENTIALS path (or place service-account.json in project root)."
+        );
+      }
+
+      const serviceAccount = JSON.parse(
+        fs.readFileSync(serviceAccountPath, "utf8")
       );
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
     }
   }
 
