@@ -104,7 +104,8 @@ export async function getDailyBriefingHistory(limitCount = 30): Promise<DailyBri
     limit(limitCount)
   );
 
-  const snap = await getDocs(q);
+  // Bypass cache so history reflects newly generated briefings immediately.
+  const snap = await getDocsFromServer(q);
   return snap.docs
     .map((d) => {
     const data = d.data() as {
@@ -134,7 +135,8 @@ export async function getAllDailyBriefingDates(): Promise<string[]> {
     limit(3650)
   );
 
-  const snap = await getDocs(q);
+  // Keep dates list in sync with latest server data.
+  const snap = await getDocsFromServer(q);
   return snap.docs
     .map((d) => (d.data() as { date?: string }).date ?? d.id)
     .filter(Boolean);

@@ -230,7 +230,16 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       const data = await res.json();
       if (res.ok && data.success) {
         await Promise.all([fetchBriefing(), fetchHistory()]);
-        addToast("✅ Briefing generated successfully!", "success");
+        if (data.email?.attempted && !data.email?.success) {
+          addToast(
+            `⚠️ Briefing generated, but email not sent: ${String(data.email?.error ?? "Unknown email error")}`,
+            "error"
+          );
+        } else if (data.email?.attempted && data.email?.success) {
+          addToast("✅ Briefing generated and emailed successfully!", "success");
+        } else {
+          addToast("✅ Briefing generated successfully!", "success");
+        }
       } else {
         throw new Error(data.details ? `${data.error}: ${data.details}` : data.error ?? "Unknown error");
       }
