@@ -13,7 +13,7 @@ const FREE_FEATURES = [
   { text: 'Basic market data', included: true },
   { text: '3 price alerts', included: true },
   { text: 'News feed', included: true },
-  { text: 'AI Chat (10 msg/day)', included: true },
+  { text: 'AI Chat (3 msg/day)', included: true },
   { text: 'Basic portfolio tracker', included: true },
   { text: 'Advanced AI analysis', included: false },
   { text: 'Portfolio AI advisor', included: false },

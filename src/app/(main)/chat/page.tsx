@@ -197,7 +197,7 @@ export default function ChatPage() {
                 </span>
                 {!isPremium && (
                   <span className="text-[10px] font-semibold text-amber-400 ml-2">
-                    {Math.max(0, 10 - messageCount)}/10 free
+                    {Math.max(0, 3 - messageCount)}/3 free
                   </span>
                 )}
                 {isPremium && (
@@ -369,7 +369,7 @@ export default function ChatPage() {
             </span>
             {!isPremium && !showUpgradePrompt && (
               <span className="text-[9px] font-mono text-amber-500/70 tracking-tight">
-                {Math.max(0, 10 - messageCount)} messages remaining today
+                {Math.max(0, 3 - messageCount)} messages remaining today
               </span>
             )}
           </div>

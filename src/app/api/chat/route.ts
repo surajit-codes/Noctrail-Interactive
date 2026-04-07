@@ -42,12 +42,12 @@ export async function POST(req: Request) {
           const usageDoc = await usageRef.get();
           const usage = usageDoc.exists ? usageDoc.data() : null;
 
-          if (usage?.date === today && usage?.count >= 10) {
+          if (usage?.date === today && usage?.count >= 3) {
             return Response.json(
               {
                 error: "daily_limit_reached",
                 message:
-                  "You have used all 10 free messages today. Upgrade to Premium for unlimited AI chat! 👑",
+                  "You have used all 3 free messages today. Upgrade to Premium for unlimited AI chat! 👑",
               },
               { status: 429 }
             );
