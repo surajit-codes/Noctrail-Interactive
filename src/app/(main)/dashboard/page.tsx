@@ -137,7 +137,7 @@ export default function DashboardPage() {
               <div className="gradient-mesh opacity-20" />
               <div className="relative z-10">
                 <div className="text-xs font-bold uppercase tracking-widest text-[var(--accent-violet-light)] mb-2">Executive Summary</div>
-                <p className="text-sm leading-relaxed line-clamp-3 text-[var(--text-primary)]">{briefing.executive_summary}</p>
+                <p className="text-sm leading-relaxed text-[var(--text-primary)]">{briefing.executive_summary}</p>
               </div>
             </motion.div>
           )}

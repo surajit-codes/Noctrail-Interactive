@@ -239,8 +239,8 @@ export default function BriefingPage() {
             {/* Market Pulse & Top Sectors */}
             {widgets.find((w: WidgetConfig) => w.id === 'market_pulse')?.active !== false && (
               <>
-                <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                  <GlassCard className="flex flex-col items-center gap-4">
+                <motion.div variants={itemVariants} className="flex flex-col lg:flex-row gap-4">
+                  <GlassCard className="w-full lg:w-1/3 flex flex-col items-center gap-4 flex-shrink-0">
                     <SectionHeader icon={<Activity size={14} />}>Market Pulse</SectionHeader>
                     <SentimentGauge score={briefing.market_pulse.sentiment_score} size={160} />
                     <div className="w-full space-y-3">
@@ -272,9 +272,9 @@ export default function BriefingPage() {
 
                   {/* Commodities Tracker — separate check if needed, but linked here in UI */}
                   {widgets.find((w: WidgetConfig) => w.id === 'commodities')?.active !== false && (
-                    <GlassCard className="lg:col-span-2">
+                    <GlassCard className="w-full lg:w-2/3 flex-1 overflow-hidden">
                       <SectionHeader icon={<TrendingUp size={14} />}>Commodities</SectionHeader>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
                         {[
                           { key: "gold", label: "Gold", data: briefing.commodities.gold },
                           { key: "crude", label: "Crude Oil", data: briefing.commodities.crude_oil },
