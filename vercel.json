@@ -4,5 +4,11 @@
       "path": "/api/analyze",
       "schedule": "30 2 * * *"
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/__/auth/:path*",
+      "destination": "https://noctrail-interactive.firebaseapp.com/__/auth/:path*"
+    }
   ]
 }
