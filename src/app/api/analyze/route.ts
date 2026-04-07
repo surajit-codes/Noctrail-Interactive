@@ -178,13 +178,13 @@ Return a single JSON object that EXACTLY matches this schema (no extra fields, n
 }
 
 Rules:
-- top_sectors: provide exactly 6 sectors
-- business_opportunities: provide 3-4 items
-- risk_alerts: provide 3-4 items
-- vc_funding_highlights: provide based on news data, minimum 2 items (fabricate plausible ones if no data available, use a generic relevant business news link if fabricating)
-- world_impact.key_events: provide 3-5 events
-- URLs: For EACH item, provide the most relevant 'url' from the 'NEWS HEADLINES WITH URLS' data provided above. DO NOT fabricate URLs. If no news is perfectly relevant, use the URL of the most significant general business news from the list.
-- Be specific with numbers (mention actual NIFTY/SENSEX levels, Gold prices, etc.)
+- top_sectors: provide exactly 2 sectors
+- business_opportunities: provide 2 items
+- risk_alerts: provide 2 items
+- vc_funding_highlights: provide 1 item
+- world_impact.key_events: provide 2 events
+- URLs: For EACH item, provide the most relevant 'url' from the 'NEWS HEADLINES WITH URLS'.
+- Keep all text descriptions extremely brief (1 sentence max) to avoid token limit truncation. Be specific with numbers.
 `.trim();
 }
 

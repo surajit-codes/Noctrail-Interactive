@@ -1,3 +1,5 @@
+import { HfInference } from "@huggingface/inference";
+
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
@@ -5,7 +7,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { messages, marketData } = body;
 
-    const apiKey = process.env.GROQ_CHAT_API_KEY || process.env.GROQ_API_KEY;
+    const apiKey = process.env.HUGGINGFACE_API_KEY || process.env.GROQ_CHAT_API_KEY || process.env.GROQ_API_KEY;
 
     // Build system context
     let systemContent =
@@ -47,36 +49,23 @@ export async function POST(req: Request) {
 
     if (!apiKey) {
       // Demo mode — no API key
-      const demoText = "I'm in demo mode since no GROQ API key was set. Add GROQ_CHAT_API_KEY to your .env.local to enable full AI responses.";
+      const demoText = "I'm in demo mode since no HUGGINGFACE API key was set. Add HUGGINGFACE_API_KEY to your .env.local to enable full AI responses.";
       return new Response(`0:${JSON.stringify(demoText)}\n`, {
         headers: { "Content-Type": "text/plain; charset=utf-8", "x-vercel-ai-data-stream": "v1" }
       });
     }
 
-    // Call Groq directly using fetch for maximum stability
-    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant", // Using a stable, fast model for chat
-        messages: [{ role: "system", content: systemContent }, ...cleanMessages],
-        temperature: 0.3,
-        max_tokens: 1024,
-        stream: false,
-      }),
+    const hf = new HfInference(apiKey);
+    
+    // Call Hugging Face API directly
+    const hfRes = await hf.chatCompletion({
+      model: "meta-llama/Meta-Llama-3-8B-Instruct", // Fast chat model
+      messages: [{ role: "system", content: systemContent }, ...(cleanMessages as any)],
+      temperature: 0.3,
+      max_tokens: 1024,
     });
 
-    if (!groqRes.ok) {
-      const errText = await groqRes.text();
-      console.error("Groq API error response:", groqRes.status, errText);
-      return Response.json({ error: `Groq API responded with ${groqRes.status}`, details: errText }, { status: 500 });
-    }
-
-    const data = await groqRes.json();
-    const text: string = data.choices?.[0]?.message?.content ?? "I couldn't generate a response. Please try again.";
+    const text: string = hfRes.choices?.[0]?.message?.content ?? "I couldn't generate a response. Please try again.";
 
     // Return in Vercel AI SDK data stream format so client parser works
     // The format is "0:" followed by JSON stringified text

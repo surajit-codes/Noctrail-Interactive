@@ -34,6 +34,11 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# test artifacts
+test_hf.ts
+out.json
+output.txt
+
 # vercel
 .vercel
 
