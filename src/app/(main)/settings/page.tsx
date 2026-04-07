@@ -4,9 +4,11 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import AnimatedGrid from "@/components/AnimatedGrid";
 import GlassCard from "@/components/GlassCard";
-import { Settings as SettingsIcon, GripVertical, Save, Moon, Sun, Monitor, Type } from "lucide-react";
+import { Settings as SettingsIcon, GripVertical, Save, Moon, Sun, Monitor, Crown, AlertTriangle } from "lucide-react";
 import { useData } from "@/context/DataContext";
 import { useAuth } from "@/context/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
+import { useRouter } from "next/navigation";
 import SectionHeader from "@/components/SectionHeader";
 
 import {
@@ -61,8 +63,6 @@ function SortableItem(props: { id: string; label: string; active: boolean; toggl
         <GripVertical size={16} />
       </button>
       <div className="flex-1 font-medium text-sm text-[var(--text-primary)]">{props.label}</div>
-      
-      {/* Toggle switch for active state */}
       <button 
         onClick={() => props.toggle(props.id)}
         className={`w-10 h-5 rounded-full relative transition-colors ${props.active ? "bg-[var(--accent-violet)]" : "bg-[rgba(255,255,255,0.1)]"}`}
@@ -84,8 +84,12 @@ export default function SettingsPage() {
     fontBody, setFontBody
   } = useData();
   const { user } = useAuth();
+  const { isPremium, expiresAt, isLoading: subLoading } = useSubscription();
+  const router = useRouter();
   
   const [isSaving, setIsSaving] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const displayFonts = [
     { name: "Syne", preview: "Aa Bb Cc" },
@@ -125,12 +129,35 @@ export default function SettingsPage() {
 
   const handleSave = () => {
     setIsSaving(true);
-    // Values are already updated via individual setters, 
-    // but this button provides explicit confirmation.
     setTimeout(() => {
       setIsSaving(false);
       addToast("Preferences saved successfully", "success");
     }, 600);
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!user?.uid) return;
+    setIsCancelling(true);
+    try {
+      const res = await fetch('/api/payment/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.uid }),
+      }).then(r => r.json());
+
+      if (res.success) {
+        addToast("Subscription cancelled. You're now on the Free plan.", "info");
+        setShowCancelConfirm(false);
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        addToast("Failed to cancel subscription.", "error");
+      }
+    } catch (err) {
+      console.error("Cancel failed:", err);
+      addToast("Failed to cancel subscription.", "error");
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   return (
@@ -151,6 +178,178 @@ export default function SettingsPage() {
             <Save size={16} /> {isSaving ? "Saving..." : "Save Changes"}
           </button>
         </div>
+
+        {/* ═══ Subscription Management ═══ */}
+        <motion.div variants={itemVariants}>
+          <GlassCard title="Subscription" icon={Crown}>
+            {subLoading ? (
+              <div style={{ height: '4rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', animation: 'pulse 2s infinite' }} />
+            ) : isPremium ? (
+              <div className="space-y-4">
+                {/* Active Premium Status */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '1rem 1.25rem',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(234,179,8,0.05))',
+                  border: '1px solid rgba(245,158,11,0.3)',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ fontSize: '1.5rem' }}>👑</span>
+                    <div>
+                      <div style={{ color: '#fbbf24', fontWeight: 700, fontSize: '0.95rem' }}>BriefAI Premium</div>
+                      <div style={{ color: '#9ca3af', fontSize: '0.75rem' }}>
+                        Active until {expiresAt ? new Date(expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{
+                    background: 'rgba(16,185,129,0.15)',
+                    color: '#34d399',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    padding: '0.3rem 0.75rem',
+                    borderRadius: '999px',
+                    letterSpacing: '0.05em',
+                  }}>
+                    ACTIVE
+                  </div>
+                </div>
+
+                {/* Premium Features */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  {['Unlimited AI Chat', 'PDF & Excel Export', 'Deep Analysis', 'Portfolio AI Advisor', 'Priority Briefings', 'Premium Badge'].map((f, i) => (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
+                      padding: '0.5rem 0.75rem',
+                      fontSize: '0.8rem', color: '#d1d5db',
+                    }}>
+                      <span style={{ color: '#34d399' }}>✓</span> {f}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Cancel Button */}
+                {!showCancelConfirm ? (
+                  <button
+                    onClick={() => setShowCancelConfirm(true)}
+                    style={{
+                      padding: '0.6rem 1.25rem',
+                      borderRadius: '10px',
+                      border: '1px solid rgba(239,68,68,0.25)',
+                      background: 'transparent',
+                      color: '#f87171',
+                      fontSize: '0.8rem',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => { (e.currentTarget).style.background = 'rgba(239,68,68,0.08)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget).style.background = 'transparent'; }}
+                  >
+                    Cancel Subscription
+                  </button>
+                ) : (
+                  <div style={{
+                    padding: '1rem',
+                    borderRadius: '12px',
+                    background: 'rgba(239,68,68,0.08)',
+                    border: '1px solid rgba(239,68,68,0.25)',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                      <AlertTriangle size={16} style={{ color: '#f87171' }} />
+                      <span style={{ color: '#f87171', fontWeight: 600, fontSize: '0.85rem' }}>
+                        Are you sure you want to cancel?
+                      </span>
+                    </div>
+                    <p style={{ color: '#9ca3af', fontSize: '0.8rem', marginBottom: '1rem', lineHeight: 1.5 }}>
+                      You&apos;ll lose access to all premium features including unlimited AI chat, PDF/Excel exports, 
+                      deep analysis, and portfolio AI advisor. This action takes effect immediately.
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        onClick={handleCancelSubscription}
+                        disabled={isCancelling}
+                        style={{
+                          padding: '0.5rem 1.25rem',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: '#ef4444',
+                          color: 'white',
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          opacity: isCancelling ? 0.6 : 1,
+                        }}
+                      >
+                        {isCancelling ? 'Cancelling...' : 'Yes, Cancel Plan'}
+                      </button>
+                      <button
+                        onClick={() => setShowCancelConfirm(false)}
+                        style={{
+                          padding: '0.5rem 1.25rem',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          background: 'transparent',
+                          color: '#d1d5db',
+                          fontSize: '0.8rem',
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Keep Premium
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Free Plan */
+              <div className="space-y-4">
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '1rem 1.25rem',
+                  borderRadius: '12px',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid var(--border-subtle)',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ fontSize: '1.5rem' }}>📋</span>
+                    <div>
+                      <div style={{ color: 'white', fontWeight: 700, fontSize: '0.95rem' }}>Free Plan</div>
+                      <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>Limited features • 10 AI messages/day</div>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => router.push('/pricing')}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: 'linear-gradient(to right, #eab308, #f59e0b)',
+                    color: 'black',
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 4px 15px -3px rgba(245,158,11,0.3)',
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget).style.transform = 'scale(1.02)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget).style.transform = 'scale(1)'; }}
+                >
+                  ⚡ Upgrade to Premium
+                </button>
+              </div>
+            )}
+          </GlassCard>
+        </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Appearance */}
@@ -177,8 +376,6 @@ export default function SettingsPage() {
 
                 <div>
                   <h4 className="text-sm font-semibold mb-3 text-[var(--text-primary)]">Typography</h4>
-                  
-                  {/* Display Font */}
                   <div className="mb-4">
                     <span className="text-[10px] uppercase font-bold tracking-widest text-[var(--text-muted)] mb-2 block">Display Font (Headings)</span>
                     <div className="grid grid-cols-2 gap-2">
@@ -194,8 +391,6 @@ export default function SettingsPage() {
                       ))}
                     </div>
                   </div>
-
-                  {/* Body Font */}
                   <div>
                     <span className="text-[10px] uppercase font-bold tracking-widest text-[var(--text-muted)] mb-2 block">Body Font (Content)</span>
                     <div className="grid grid-cols-3 gap-2">

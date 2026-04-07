@@ -90,21 +90,29 @@ export default function PricingPage() {
         prefill: {
           name: user?.displayName || '',
           email: user?.email || '',
+          method: 'upi',
+          vpa: 'success@razorpay',
         },
         theme: { color: '#7c3aed' },
         remember_customer: false,
         retry: { enabled: true, max_count: 3 },
-        method: {
-          card: true,
-          netbanking: true,
-          upi: true,
-          wallet: true,
-          paylater: true,
-        },
         config: {
           display: {
-            hide: [{ method: 'card', issuers: ['DICL'] }],
-            preferences: { show_default_blocks: true },
+            blocks: {
+              upi: {
+                name: 'Pay via UPI',
+                instruments: [{ method: 'upi', flows: ['collect', 'qr'] }],
+              },
+              other: {
+                name: 'Other Methods',
+                instruments: [
+                  { method: 'netbanking' },
+                  { method: 'wallet' },
+                ],
+              },
+            },
+            sequence: ['block.upi', 'block.other'],
+            preferences: { show_default_blocks: false },
           },
         },
         modal: {
@@ -136,6 +144,31 @@ export default function PricingPage() {
     } catch (err) {
       console.error('Payment error:', err);
       addToast('Payment failed. Please try again.', 'error');
+      setIsProcessing(false);
+    }
+  };
+
+  // Dev/Test mode: bypass Razorpay, activate premium directly
+  const handleTestActivate = async () => {
+    if (isPremium || isProcessing) return;
+    setIsProcessing(true);
+    try {
+      const result = await fetch('/api/payment/test-activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.uid, plan: billing }),
+      }).then((r) => r.json());
+
+      if (result.success) {
+        addToast('Premium activated (test mode)!', 'success');
+        router.push('/payment/success');
+      } else {
+        addToast('Test activation failed.', 'error');
+      }
+    } catch (err) {
+      console.error('Test activate error:', err);
+      addToast('Test activation failed.', 'error');
+    } finally {
       setIsProcessing(false);
     }
   };
@@ -445,6 +478,36 @@ export default function PricingPage() {
             <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '0.75rem', marginTop: '0.75rem' }}>
               Secure payment via Razorpay 🔒
             </p>
+
+            {/* Dev/Test Mode Button */}
+            {!isPremium && (
+              <button
+                onClick={handleTestActivate}
+                disabled={isProcessing}
+                style={{
+                  width: '100%',
+                  marginTop: '0.75rem',
+                  padding: '0.7rem',
+                  borderRadius: '10px',
+                  border: '1px dashed rgba(16,185,129,0.5)',
+                  background: 'rgba(16,185,129,0.08)',
+                  color: '#34d399',
+                  fontWeight: 600,
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  opacity: isProcessing ? 0.6 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = 'rgba(16,185,129,0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.background = 'rgba(16,185,129,0.08)';
+                }}
+              >
+                🧪 Test Activate Premium (Dev Mode)
+              </button>
+            )}
           </motion.div>
         </div>
 
