@@ -6,6 +6,22 @@ import { sendBriefingEmail } from "@/lib/email";
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
+/** Public URL for server-side self-fetch (Vercel sets x-forwarded-*). */
+function getInternalBaseUrl(request: NextRequest): string {
+  const host =
+    request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ||
+    request.headers.get("host") ||
+    "localhost:3000";
+  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const protocol =
+    forwardedProto === "https" || forwardedProto === "http"
+      ? forwardedProto
+      : host.startsWith("localhost") || host.startsWith("127.0.0.1")
+        ? "http"
+        : "https";
+  return `${protocol}://${host}`;
+}
+
 // ─── Auth Guard ───────────────────────────────────────────────────
 function isAuthorized(request: NextRequest): boolean {
   // Allow Vercel cron
@@ -179,10 +195,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Determine base URL for internal API calls
-    const host = request.headers.get("host") ?? "localhost:3000";
-    const protocol = host.startsWith("localhost") ? "http" : "https";
-    const baseUrl = `${protocol}://${host}`;
+    const baseUrl = getInternalBaseUrl(request);
 
     // 1. Fetch all data
     const { markets, news, currency } = await fetchData(baseUrl);

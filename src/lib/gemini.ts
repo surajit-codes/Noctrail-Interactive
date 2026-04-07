@@ -1,13 +1,22 @@
 import Groq from "groq-sdk";
 
-// Using the key provided in GEMINI_API_KEY in .env.local
-const apiKey = process.env.GEMINI_API_KEY!;
+// Groq key: prefer GEMINI_API_KEY (legacy name) then chat key then generic GROQ
+const apiKey =
+  process.env.GEMINI_API_KEY ||
+  process.env.GROQ_CHAT_API_KEY ||
+  process.env.GROQ_API_KEY ||
+  "";
 
-const groq = new Groq({ apiKey });
+const groq = apiKey ? new Groq({ apiKey }) : null;
 
 export function getGeminiModel() {
   return {
     generateContent: async (prompt: string) => {
+      if (!groq) {
+        throw new Error(
+          "Missing Groq API key. Set GEMINI_API_KEY, GROQ_CHAT_API_KEY, or GROQ_API_KEY."
+        );
+      }
       const completion = await groq.chat.completions.create({
         messages: [
           {
