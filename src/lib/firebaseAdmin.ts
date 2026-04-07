@@ -90,13 +90,15 @@ export function getAdminDb(): FirebaseFirestore.Firestore {
 const DAILY_BRIEFINGS_COLLECTION = "daily_briefings";
 const PUSH_SUBSCRIPTIONS_COLLECTION = "push_subscriptions";
 
-export async function upsertDailyBriefing(date: string, briefing: BriefingData) {
+export async function upsertDailyBriefing(userId: string, date: string, briefing: BriefingData) {
   const db = getAdminDb();
   const createdAt = new Date().toISOString();
 
   // Changed: Use auto-generated ID to preserve history of every run,
   // but keep the 'date' field for querying latest by day.
   await db
+    .collection("users")
+    .doc(userId)
     .collection(DAILY_BRIEFINGS_COLLECTION)
     .add({
       date,
@@ -105,12 +107,13 @@ export async function upsertDailyBriefing(date: string, briefing: BriefingData) 
     });
 }
 
-export async function getAllUsers(): Promise<Array<{ email: string; name?: string }>> {
+export async function getAllUsers(): Promise<Array<{ id: string; email: string; name?: string }>> {
   const db = getAdminDb();
   const snapshot = await db.collection("users").get();
   return snapshot.docs.map(doc => {
     const data = doc.data();
     return {
+      id: doc.id,
       email: data.email,
       name: data.name,
     };

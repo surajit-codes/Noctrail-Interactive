@@ -228,9 +228,21 @@ export async function POST(request: NextRequest) {
     // 3. Save to Firestore (upsert by date)
     const todayDate = new Date().toISOString().split("T")[0];
 
+    const userEmail = request.headers.get("x-user-email");
+    const userId = request.headers.get("x-user-id");
+    const isCron = request.headers.get("authorization") === `Bearer ${CRON_SECRET}`;
+
     let saved = true;
     try {
-      await upsertDailyBriefing(todayDate, briefing);
+      if (isCron) {
+        const users = await getAllUsers();
+        await Promise.all(users.map(u => upsertDailyBriefing(u.id, todayDate, briefing)));
+      } else if (userId) {
+        await upsertDailyBriefing(userId, todayDate, briefing);
+      } else {
+        console.warn("No userId or cron auth provided; skip saving briefing.");
+        saved = false;
+      }
     } catch (dbErr) {
       saved = false;
       console.error("Firestore upsert error:", dbErr);
@@ -238,8 +250,6 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Trigger email notifications
-    const userEmail = request.headers.get("x-user-email");
-    const isCron = request.headers.get("authorization") === `Bearer ${CRON_SECRET}`;
 
     let emailStatus:
       | { attempted: false }

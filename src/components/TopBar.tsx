@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataContext";
 import { Loader2, LogOut, Mail, Menu, Moon, RotateCcw, Sun } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useSubscription } from "@/hooks/useSubscription";
 
 function LiveClock() {
   const [time, setTime] = useState("");
@@ -34,6 +35,7 @@ export default function TopBar() {
   const { running, theme, handleRunNow, toggleTheme, setMobileMenuOpen } = useData();
   const [showMobileLogout, setShowMobileLogout] = useState(false);
   const pathname = usePathname();
+  const { isPremium } = useSubscription();
 
   // Convert pathname to nice title
   let pageTitle = "BriefAI";
@@ -113,7 +115,7 @@ export default function TopBar() {
               background: "linear-gradient(135deg, var(--accent-violet), #6d28d9)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: "0.65rem", fontWeight: 700, color: "white",
-            }}>
+            }} className={isPremium ? "border-2 border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]" : ""}>
               {user?.displayName ? user.displayName.charAt(0).toUpperCase() : "U"}
             </div>
             <div className="hidden sm:block">

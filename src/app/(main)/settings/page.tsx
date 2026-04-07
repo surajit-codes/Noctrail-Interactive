@@ -4,11 +4,12 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import AnimatedGrid from "@/components/AnimatedGrid";
 import GlassCard from "@/components/GlassCard";
-import { Settings as SettingsIcon, GripVertical, Save, Moon, Sun, Monitor, Crown, AlertTriangle } from "lucide-react";
+import { Settings as SettingsIcon, GripVertical, Save, Moon, Sun, Monitor, Crown, AlertTriangle, Database, Download, Trash2, Upload } from "lucide-react";
 import { useData } from "@/context/DataContext";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useRouter } from "next/navigation";
+import { wipeUserHistory, getDailyBriefingHistory, restoreUserHistory } from "@/lib/firebaseClient";
 import SectionHeader from "@/components/SectionHeader";
 
 import {
@@ -90,6 +91,10 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showWipeConfirm, setShowWipeConfirm] = useState(false);
+  const [isWiping, setIsWiping] = useState(false);
+  const [isBackingUp, setIsBackingUp] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
 
   const displayFonts = [
     { name: "Syne", preview: "Aa Bb Cc" },
@@ -157,6 +162,80 @@ export default function SettingsPage() {
       addToast("Failed to cancel subscription.", "error");
     } finally {
       setIsCancelling(false);
+    }
+  };
+
+  const handleWipeData = async () => {
+    if (!user?.uid) return;
+    setIsWiping(true);
+    try {
+      await wipeUserHistory(user.uid);
+      addToast("Data wiped successfully! Dashboard is now clean.", "success");
+      setShowWipeConfirm(false);
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      console.error(err);
+      addToast("Failed to wipe data.", "error");
+    } finally {
+      setIsWiping(false);
+    }
+  };
+
+  const handleBackupData = async () => {
+    if (!user?.uid) return;
+    if (!isPremium) {
+      addToast("Backup is a premium feature.", "error");
+      router.push("/pricing");
+      return;
+    }
+    setIsBackingUp(true);
+    try {
+      const history = await getDailyBriefingHistory(user.uid, 500);
+      const dataStr = JSON.stringify(history, null, 2);
+      const dataBlob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(dataBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `briefai_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      addToast("Backup downloaded successfully!", "success");
+    } catch (err) {
+      console.error(err);
+      addToast("Failed to generate backup.", "error");
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
+  const handleRestoreData = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user?.uid) return;
+    if (!isPremium) {
+      addToast("Restore is a premium feature.", "error");
+      router.push("/pricing");
+      return;
+    }
+    
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsRestoring(true);
+    try {
+      const text = await file.text();
+      const historyItems = JSON.parse(text);
+      if (!Array.isArray(historyItems)) {
+         throw new Error("Invalid format: expected array");
+      }
+      addToast("Restoring data... Please wait.", "info");
+      await restoreUserHistory(user.uid, historyItems);
+      addToast("Data restored successfully!", "success");
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      console.error(err);
+      addToast("Failed to restore data. Check the file format.", "error");
+    } finally {
+      setIsRestoring(false);
+      e.target.value = ''; // clear input
     }
   };
 
@@ -348,6 +427,91 @@ export default function SettingsPage() {
                 </button>
               </div>
             )}
+          </GlassCard>
+        </motion.div>
+
+        {/* ═══ Data Management ═══ */}
+        <motion.div variants={itemVariants}>
+          <GlassCard title="Data Management" icon={Database}>
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)]">
+                <div>
+                  <h4 className="text-sm font-semibold text-white">Backup & Restore</h4>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">
+                    Download or restore your past AI briefings safely (Premium only).
+                  </p>
+                </div>
+                
+                <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                  <button
+                    onClick={handleBackupData}
+                    disabled={isBackingUp || isRestoring}
+                    title="Download Backup"
+                    className={`flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg transition-all flex-1 sm:flex-none
+                      ${isPremium 
+                        ? 'bg-[rgba(16,185,129,0.1)] text-[#34d399] hover:bg-[rgba(16,185,129,0.2)] border border-[rgba(16,185,129,0.2)] cursor-pointer' 
+                        : 'bg-[rgba(255,255,255,0.05)] text-[var(--text-muted)] cursor-not-allowed opacity-70'}
+                    `}
+                  >
+                    <Download size={16} />
+                    <span className="hidden sm:inline">{isBackingUp ? "..." : "Backup"}</span>
+                  </button>
+
+                  <label
+                    title="Restore Data"
+                    className={`flex items-center justify-center gap-2 px-3 py-2 text-sm font-semibold rounded-lg transition-all flex-1 sm:flex-none cursor-pointer
+                      ${isPremium 
+                        ? 'bg-[rgba(59,130,246,0.1)] text-[#60a5fa] hover:bg-[rgba(59,130,246,0.2)] border border-[rgba(59,130,246,0.2)]' 
+                        : 'bg-[rgba(255,255,255,0.05)] text-[var(--text-muted)] cursor-not-allowed opacity-70'}
+                    `}
+                  >
+                    <Upload size={16} />
+                    <span className="hidden sm:inline">{isRestoring ? "..." : "Restore"}</span>
+                    <input 
+                      type="file" 
+                      accept=".json" 
+                      onChange={handleRestoreData} 
+                      className="hidden" 
+                      disabled={!isPremium || isRestoring}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl border border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.02)]">
+                <div>
+                  <h4 className="text-sm font-semibold text-[#f87171]">Danger Zone: Wipe Data</h4>
+                  <p className="text-xs text-[var(--text-muted)] mt-1 max-w-[400px]">
+                    Permanently delete all your AI briefing history from our servers. This action cannot be undone.
+                  </p>
+                </div>
+                {!showWipeConfirm ? (
+                  <button
+                    onClick={() => setShowWipeConfirm(true)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all whitespace-nowrap bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 cursor-pointer"
+                  >
+                    <Trash2 size={16} />
+                    Wipe My Data
+                  </button>
+                ) : (
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <button
+                      onClick={() => setShowWipeConfirm(false)}
+                      className="px-4 py-2 text-sm font-medium rounded-lg border border-[var(--border-subtle)] text-[var(--text-muted)] hover:text-white transition-colors flex-1 sm:flex-none cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleWipeData}
+                      disabled={isWiping}
+                      className="px-4 py-2 text-sm font-bold rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors flex-1 sm:flex-none cursor-pointer"
+                    >
+                      {isWiping ? "Wiping..." : "Yes, Delete It"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </GlassCard>
         </motion.div>
 

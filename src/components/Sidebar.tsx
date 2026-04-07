@@ -218,7 +218,7 @@ function NavItems({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNaviga
           background: "linear-gradient(135deg,var(--accent-violet),#6d28d9)",
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: "0.7rem", fontWeight: 700, color: "white", flexShrink: 0,
-        }}>
+        }} className={isPremium ? "border-2 border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]" : ""}>
           {user?.displayName ? user.displayName.charAt(0).toUpperCase() : "U"}
         </div>
         {!isCollapsed && (

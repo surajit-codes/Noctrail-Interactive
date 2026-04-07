@@ -159,22 +159,24 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const fetchBriefing = useCallback(async () => {
+    if (!user) return;
     try {
-      const latest = await getLatestDailyBriefing();
+      const latest = await getLatestDailyBriefing(user.uid);
       if (latest) setBriefing(latest);
     } catch (err) {
       console.warn("Failed to fetch briefing:", err);
     }
-  }, []);
+  }, [user]);
 
   const fetchHistory = useCallback(async () => {
+    if (!user) return;
     try {
-      const rows = await getDailyBriefingHistory(30);
+      const rows = await getDailyBriefingHistory(user.uid, 30);
       setHistory(rows);
     } catch (err) {
       console.warn("Failed to fetch history:", err);
     }
-  }, []);
+  }, [user]);
 
   const fetchMarketData = useCallback(async () => {
     try {
@@ -224,7 +226,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         method: "POST",
         headers: { 
           "x-demo-bypass": "true",
-          "x-user-email": user?.email ?? ""
+          "x-user-email": user?.email ?? "",
+          "x-user-id": user?.uid ?? ""
         },
       });
       const data = await res.json();

@@ -14,6 +14,8 @@ import {
   getDocFromServer,
   getDocsFromServer,
   where,
+  writeBatch,
+  deleteDoc,
 } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
@@ -57,10 +59,10 @@ export const googleProvider = new GoogleAuthProvider();
 // - each doc contains: { date: string, briefing: BriefingData, created_at: string }
 const DAILY_BRIEFINGS_COLLECTION = "daily_briefings";
 
-export async function getLatestDailyBriefing(): Promise<BriefingData | null> {
+export async function getLatestDailyBriefing(userId: string): Promise<BriefingData | null> {
   const db = getDb();
   const q = query(
-    collection(db, DAILY_BRIEFINGS_COLLECTION),
+    collection(db, "users", userId, DAILY_BRIEFINGS_COLLECTION),
     orderBy("created_at", "desc"),
     limit(1)
   );
@@ -74,12 +76,12 @@ export async function getLatestDailyBriefing(): Promise<BriefingData | null> {
   return briefing ?? null;
 }
 
-export async function getDailyBriefingByDate(dateOrId: string): Promise<DailyBriefing | null> {
+export async function getDailyBriefingByDate(userId: string, dateOrId: string): Promise<DailyBriefing | null> {
   const db = getDb();
   
   // 1. Try to query by the 'date' field
   const q = query(
-    collection(db, DAILY_BRIEFINGS_COLLECTION),
+    collection(db, "users", userId, DAILY_BRIEFINGS_COLLECTION),
     where("date", "==", dateOrId)
   );
   
@@ -96,7 +98,7 @@ export async function getDailyBriefingByDate(dateOrId: string): Promise<DailyBri
     })[0];
   } else {
     // 2. Fallback: try fetching by document ID
-    const docRef = doc(db, DAILY_BRIEFINGS_COLLECTION, dateOrId);
+    const docRef = doc(db, "users", userId, DAILY_BRIEFINGS_COLLECTION, dateOrId);
     const idSnap = await getDocFromServer(docRef);
     if (idSnap.exists()) {
       targetDoc = idSnap;
@@ -121,10 +123,10 @@ export async function getDailyBriefingByDate(dateOrId: string): Promise<DailyBri
   };
 }
 
-export async function getDailyBriefingHistory(limitCount = 30): Promise<DailyBriefing[]> {
+export async function getDailyBriefingHistory(userId: string, limitCount = 30): Promise<DailyBriefing[]> {
   const db = getDb();
   const q = query(
-    collection(db, DAILY_BRIEFINGS_COLLECTION),
+    collection(db, "users", userId, DAILY_BRIEFINGS_COLLECTION),
     orderBy("created_at", "desc"),
     limit(limitCount)
   );
@@ -151,10 +153,10 @@ export async function getDailyBriefingHistory(limitCount = 30): Promise<DailyBri
     .filter((v): v is DailyBriefing => v !== null);
 }
 
-export async function getAllDailyBriefingDates(): Promise<string[]> {
+export async function getAllDailyBriefingDates(userId: string): Promise<string[]> {
   const db = getDb();
   const q = query(
-    collection(db, DAILY_BRIEFINGS_COLLECTION),
+    collection(db, "users", userId, DAILY_BRIEFINGS_COLLECTION),
     orderBy("date", "desc"),
     // Fetch all; this app expects a relatively small history set.
     limit(3650)
@@ -166,6 +168,48 @@ export async function getAllDailyBriefingDates(): Promise<string[]> {
     .map((d) => (d.data() as { date?: string }).date ?? d.id)
     .filter(Boolean);
   return Array.from(new Set(dates));
+}
+
+export async function wipeUserHistory(userId: string): Promise<void> {
+  const db = getDb();
+  const q = query(collection(db, "users", userId, DAILY_BRIEFINGS_COLLECTION));
+  const snap = await getDocs(q);
+  
+  if (snap.empty) return;
+  
+  const batch = writeBatch(db);
+  snap.docs.forEach((d) => {
+    batch.delete(d.ref);
+  });
+  
+  await batch.commit();
+}
+
+export async function restoreUserHistory(userId: string, history: DailyBriefing[]): Promise<void> {
+  const db = getDb();
+  if (!history || !Array.isArray(history) || history.length === 0) return;
+  
+  const chunks = [];
+  for (let i = 0; i < history.length; i += 500) {
+    chunks.push(history.slice(i, i + 500));
+  }
+
+  for (const chunk of chunks) {
+    const batch = writeBatch(db);
+    for (const item of chunk) {
+      if (!item.date || !item.briefing) continue;
+      const docRef = item.id 
+        ? doc(db, "users", userId, DAILY_BRIEFINGS_COLLECTION, item.id) 
+        : doc(collection(db, "users", userId, DAILY_BRIEFINGS_COLLECTION));
+        
+      batch.set(docRef, {
+        date: item.date,
+        briefing: item.briefing,
+        created_at: item.created_at || new Date().toISOString()
+      }, { merge: true });
+    }
+    await batch.commit();
+  }
 }
 
 export interface PortfolioItem {
