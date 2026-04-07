@@ -17,6 +17,7 @@ import Image from "next/image";
 import { ExternalLink } from "lucide-react";
 import type { BriefingData } from "@/lib/briefingTypes";
 import { useData, WidgetConfig } from "@/context/DataContext";
+import { useAuth } from "@/context/AuthContext";
 import { getAllDailyBriefingDates, getDailyBriefingByDate } from "@/lib/firebaseClient";
 
 const containerVariants: Variants = {
@@ -50,6 +51,7 @@ function ConfidenceBar({ value }: { value: number }) {
 
 export default function BriefingPage() {
   const { widgets } = useData();
+  const { user } = useAuth();
   const params = useParams<{ date: string }>();
   const router = useRouter();
   const date = params.date;
@@ -61,14 +63,15 @@ export default function BriefingPage() {
 
   useEffect(() => {
     const loadData = async () => {
+      if (!user?.uid) return;
       setLoading(true);
       setOfflineError(false);
       try {
         // Load this specific briefing + all dates for prev/next navigation
-        const row = await getDailyBriefingByDate(date);
+        const row = await getDailyBriefingByDate(user.uid, date);
         if (row) setBriefing(row.briefing);
 
-        const dates = await getAllDailyBriefingDates();
+        const dates = await getAllDailyBriefingDates(user.uid);
         setAllDates(dates);
       } catch (err: any) {
         console.error("Failed to load briefing:", err);
@@ -81,8 +84,8 @@ export default function BriefingPage() {
       }
     };
 
-    if (date) loadData();
-  }, [date]);
+    if (date && user?.uid) loadData();
+  }, [date, user?.uid]);
 
   const currentIndex = allDates.indexOf(date);
   const prevDate = currentIndex < allDates.length - 1 ? allDates[currentIndex + 1] : null;
