@@ -32,6 +32,7 @@ function LiveClock() {
 export default function TopBar() {
   const { user, logOut } = useAuth();
   const { running, theme, handleRunNow, toggleTheme, setMobileMenuOpen } = useData();
+  const [showMobileLogout, setShowMobileLogout] = useState(false);
   const pathname = usePathname();
 
   // Convert pathname to nice title
@@ -101,19 +102,39 @@ export default function TopBar() {
         </div>
         
         {/* User Avatar */}
-        <div className="topbar-avatar" style={{ cursor: "default", background: "var(--bg-card)", borderColor: "var(--border-subtle)" }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: 8,
-            background: "linear-gradient(135deg, var(--accent-violet), #6d28d9)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "0.65rem", fontWeight: 700, color: "white",
-          }}>
-            {user?.displayName ? user.displayName.charAt(0).toUpperCase() : "U"}
+        <div className="relative">
+          <div 
+            className="topbar-avatar" 
+            onClick={() => setShowMobileLogout(!showMobileLogout)}
+            style={{ cursor: "pointer", background: "var(--bg-card)", borderColor: "var(--border-subtle)" }}
+          >
+            <div style={{
+              width: 28, height: 28, borderRadius: 8,
+              background: "linear-gradient(135deg, var(--accent-violet), #6d28d9)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: "0.65rem", fontWeight: 700, color: "white",
+            }}>
+              {user?.displayName ? user.displayName.charAt(0).toUpperCase() : "U"}
+            </div>
+            <div className="hidden sm:block">
+              <div className="text-xs font-semibold" style={{ color: "var(--text-primary)", lineHeight: 1.2 }}>{user?.displayName || "User"}</div>
+              <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>CEO</div>
+            </div>
           </div>
-          <div className="hidden sm:block">
-            <div className="text-xs font-semibold" style={{ color: "var(--text-primary)", lineHeight: 1.2 }}>{user?.displayName || "User"}</div>
-            <div className="text-[10px]" style={{ color: "var(--text-muted)" }}>CEO</div>
-          </div>
+
+          {/* Mobile Logout Popover */}
+          {showMobileLogout && (
+            <div className="absolute right-0 top-full mt-2 w-32 p-1.5 rounded-xl border border-[var(--border-subtle)] sm:hidden z-50 shadow-lg flex flex-col gap-1" style={{ background: "var(--bg-card)" }}>
+               <button 
+                onClick={logOut} 
+                className="flex items-center justify-center gap-2 px-3 py-2 w-full rounded-lg transition-all"
+                style={{ background: "rgba(239, 68, 68, 0.1)", color: "#ef4444" }}
+              >
+                <LogOut size={14} strokeWidth={2.5} />
+                <span className="text-xs font-bold tracking-wide">LOGOUT</span>
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="hidden sm:block" style={{ width: 1, height: 24, background: "var(--border-subtle)", margin: "0 4px" }} />

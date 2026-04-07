@@ -13,7 +13,7 @@ export default function Home() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setMinTimePassed(true);
-    }, 2000); // 2 seconds for branding
+    }, 4500); // 4.5 seconds for branding to ensure text fully animates
 
     return () => clearTimeout(timer);
   }, []);
