@@ -4,6 +4,9 @@ import { upsertDailyBriefing, getAllUsers } from "@/lib/firebaseAdmin";
 import type { BriefingData } from "@/lib/briefingTypes";
 import { sendBriefingEmail } from "@/lib/email";
 
+export const maxDuration = 60; // Allow function to run for up to 60 seconds
+export const dynamic = 'force-dynamic'; // Prevent Next.js from caching the cron job response
+
 const CRON_SECRET = process.env.CRON_SECRET;
 
 /** Public URL for server-side self-fetch (Vercel sets x-forwarded-*). */
