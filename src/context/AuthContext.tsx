@@ -35,6 +35,8 @@ function getLocalDb() {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isPremium: boolean;
+  loadingPremium: boolean;
   signInWithGoogle: () => Promise<void>;
   signUpWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
@@ -45,6 +47,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  isPremium: false,
+  loadingPremium: true,
   signInWithGoogle: async () => {},
   signUpWithGoogle: async () => {},
   signInWithEmail: async () => {},
@@ -55,22 +59,52 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPremium, setIsPremium] = useState(false);
+  const [loadingPremium, setLoadingPremium] = useState(true);
 
   useEffect(() => {
     const auth = getFirebaseAuth();
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        // Since we want strict login/signup separation, we check if they exist here too,
-        // though normally the strict check happens during signInWithGoogle.
-        // We'll trust the current session if it exists, or one could do another DB check here.
-        setUser(currentUser);
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    });
+    
+    // We import onSnapshot dynamically or rely on the one from firebase/firestore
+    // Actually we need to import onSnapshot at the top of the file!
+    import('firebase/firestore').then(({ onSnapshot }) => {
+      let unsubscribeSub: (() => void) | undefined;
+      
+      const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+        if (currentUser) {
+          setUser(currentUser);
+          
+          const db = getLocalDb();
+          const subRef = doc(db, "users", currentUser.uid, "subscription", "current");
+          
+          unsubscribeSub = onSnapshot(subRef, (subDoc) => {
+            if (subDoc.exists()) {
+              const data = subDoc.data();
+              const isActive = data?.status === 'active';
+              const notExpired = new Date(data?.expires_at) > new Date();
+              setIsPremium(isActive && notExpired);
+            } else {
+              setIsPremium(false);
+            }
+            setLoadingPremium(false);
+          }, (err) => {
+            console.error("Subscription sync failed:", err);
+            setLoadingPremium(false);
+          });
+        } else {
+          setUser(null);
+          setIsPremium(false);
+          setLoadingPremium(false);
+          if (unsubscribeSub) unsubscribeSub();
+        }
+        setLoading(false);
+      });
 
-    return () => unsubscribe();
+      return () => {
+        unsubscribeAuth();
+        if (unsubscribeSub) unsubscribeSub();
+      };
+    });
   }, []);
 
   const signInWithGoogle = async () => {
@@ -158,7 +192,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{
-      user, loading,
+      user, loading, isPremium, loadingPremium,
       signInWithGoogle, signUpWithGoogle,
       signInWithEmail, signUpWithEmail,
       logOut
