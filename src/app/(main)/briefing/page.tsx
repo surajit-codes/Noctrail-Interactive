@@ -1,14 +1,17 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BrainCircuit, ChevronRight, Activity, AlertTriangle, Briefcase, Globe, Loader2, Search, Zap } from "lucide-react";
+import { BrainCircuit, ChevronRight, Activity, AlertTriangle, Briefcase, Globe, Search, Zap, FileText, TableProperties, Crown } from "lucide-react";
 import AnimatedGrid from "@/components/AnimatedGrid";
 import GlassCard from "@/components/GlassCard";
 import SectionHeader from "@/components/SectionHeader";
 import SignalBadge from "@/components/SignalBadge";
 import SentimentGauge from "@/components/SentimentGauge";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
+import PremiumGate from "@/components/PremiumGate";
 import { useData } from "@/context/DataContext";
+import { useSubscription } from "@/hooks/useSubscription";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -23,8 +26,74 @@ const itemVariants: any = {
 };
 
 export default function BriefingPage() {
-  const { briefing, history, loading } = useData();
+  const { briefing, history, loading, addToast } = useData();
+  const { isPremium } = useSubscription();
+  const router = useRouter();
   const [searchHistory, setSearchHistory] = useState("");
+
+  const exportPDF = async () => {
+    try {
+      addToast("Generating PDF...", "info");
+      const html2canvas = (await import("html2canvas")).default;
+      const { jsPDF } = await import("jspdf");
+
+      const element = document.getElementById("briefing-content")!;
+      const canvas = await html2canvas(element, {
+        backgroundColor: "#020817",
+        scale: 2,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const width = pdf.internal.pageSize.getWidth();
+      const height = (canvas.height * width) / canvas.width;
+      pdf.addImage(imgData, "PNG", 0, 0, width, height);
+      pdf.save(`BriefAI-Briefing-${new Date().toLocaleDateString("en-IN")}.pdf`);
+      addToast("PDF exported successfully!", "success");
+    } catch (err) {
+      console.error("PDF export failed:", err);
+      addToast("PDF export failed", "error");
+    }
+  };
+
+  const exportExcel = async () => {
+    try {
+      addToast("Generating Excel...", "info");
+      const XLSX = await import("xlsx");
+
+      const summaryData = [
+        ["BriefAI Export", briefing!.date],
+        ["Generated At", briefing!.generated_at],
+        [""],
+        ["MARKET PULSE"],
+        ["Decision", briefing!.market_pulse.decision],
+        ["Sentiment Score", briefing!.market_pulse.sentiment_score],
+        ["NIFTY Trend", briefing!.market_pulse.nifty_trend],
+        ["Confidence", briefing!.market_pulse.confidence],
+        [""],
+        ["TOP SECTORS"],
+        ["Sector", "Signal", "Momentum", "Reason"],
+        ...briefing!.top_sectors.map((s: any) => [s.name, s.signal, s.momentum, s.reason]),
+        [""],
+        ["BUSINESS OPPORTUNITIES"],
+        ["Title", "Urgency", "Description", "Action"],
+        ...briefing!.business_opportunities.map((o: any) => [o.title, o.urgency, o.description, o.action]),
+        [""],
+        ["RISK ALERTS"],
+        ["Title", "Severity", "Description", "Mitigation"],
+        ...briefing!.risk_alerts.map((r: any) => [r.title, r.severity, r.description, r.mitigation]),
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(summaryData);
+      ws["!cols"] = [{ wch: 30 }, { wch: 15 }, { wch: 40 }, { wch: 40 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Briefing");
+      XLSX.writeFile(wb, `BriefAI-${briefing!.date}.xlsx`);
+      addToast("Excel exported successfully!", "success");
+    } catch (err) {
+      console.error("Excel export failed:", err);
+      addToast("Excel export failed", "error");
+    }
+  };
 
   if (loading) {
     return (
@@ -48,8 +117,80 @@ export default function BriefingPage() {
   return (
     <>
       <AnimatedGrid />
-      <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6 relative z-10">
+      <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6 relative z-10" id="briefing-content">
         
+        {/* Export Buttons Row */}
+        <motion.div variants={itemVariants} style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", flexWrap: "wrap" }}>
+          {isPremium ? (
+            <>
+              <button
+                onClick={exportPDF}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  padding: "0.5rem 1rem",
+                  background: "rgba(239,68,68,0.12)",
+                  border: "1px solid rgba(239,68,68,0.3)",
+                  color: "#f87171",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.2)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.12)"; }}
+              >
+                <FileText size={14} /> Export PDF
+              </button>
+              <button
+                onClick={exportExcel}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  padding: "0.5rem 1rem",
+                  background: "rgba(16,185,129,0.12)",
+                  border: "1px solid rgba(16,185,129,0.3)",
+                  color: "#34d399",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(16,185,129,0.2)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(16,185,129,0.12)"; }}
+              >
+                <TableProperties size={14} /> Export Excel
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => router.push("/pricing")}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                padding: "0.5rem 1rem",
+                background: "rgba(245,158,11,0.12)",
+                border: "1px solid rgba(245,158,11,0.3)",
+                color: "#fbbf24",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontSize: "0.8rem",
+                fontWeight: 600,
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(245,158,11,0.2)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(245,158,11,0.12)"; }}
+            >
+              <Crown size={14} /> Export (Premium)
+            </button>
+          )}
+        </motion.div>
+
         {/* Executive Summary */}
         <motion.div variants={itemVariants}>
           <div className="glass-card p-6 relative overflow-hidden" style={{ borderLeft: "4px solid var(--accent-violet)" }}>
@@ -181,6 +322,36 @@ export default function BriefingPage() {
             </GlassCard>
           </motion.div>
         </div>
+
+        {/* Deep Analysis — Premium Only */}
+        <motion.div variants={itemVariants}>
+          <PremiumGate feature="Get deeper AI market analysis with detailed reasoning and historical pattern comparison">
+            <div className="glass-card p-6">
+              <SectionHeader title="Deep AI Analysis" icon={BrainCircuit} />
+              <div className="mt-4 space-y-4">
+                <div className="p-4 rounded-xl border border-[var(--border-subtle)] bg-[rgba(139,92,246,0.05)]">
+                  <h4 className="font-bold text-sm text-[var(--accent-violet-light)] mb-2">📊 Decision Reasoning</h4>
+                  <p className="text-sm text-[var(--text-secondary)]">
+                    Detailed AI reasoning behind the {briefing.market_pulse.decision} signal based on 20-day historical pattern comparison, 
+                    sector rotation analysis, and global macro indicators.
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl border border-[var(--border-subtle)] bg-[rgba(16,185,129,0.05)]">
+                  <h4 className="font-bold text-sm text-emerald-400 mb-2">📈 Risk-Adjusted Return Estimate</h4>
+                  <p className="text-sm text-[var(--text-secondary)]">
+                    AI-powered return projections with risk scenarios for your investment horizon.
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl border border-[var(--border-subtle)] bg-[rgba(245,158,11,0.05)]">
+                  <h4 className="font-bold text-sm text-amber-400 mb-2">🔍 Historical Pattern Match</h4>
+                  <p className="text-sm text-[var(--text-secondary)]">
+                    Similar market patterns from the past 5 years and their outcomes to help predict likely movements.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </PremiumGate>
+        </motion.div>
 
         {/* History Table */}
         <motion.div variants={itemVariants} className="mt-8" id="history">

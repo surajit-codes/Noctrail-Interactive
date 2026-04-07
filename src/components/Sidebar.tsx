@@ -3,13 +3,14 @@
 import {
   BarChart3, LineChart, Newspaper,
   Briefcase, BellRing, MessageSquareText, Settings, Home,
-  LogOut, X, ChevronLeft, ChevronRight
+  LogOut, X, ChevronLeft, ChevronRight, Crown
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataContext";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const NAV_ITEMS = [
   { icon: Home, href: "/dashboard", label: "Overview" },
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
   { icon: Briefcase, href: "/portfolio", label: "Portfolio" },
   { icon: BellRing, href: "/alerts", label: "Alerts" },
   { icon: MessageSquareText, href: "/chat", label: "AI Chat" },
+  { icon: Crown, href: "/pricing", label: "Pricing", isGold: true },
   { icon: Settings, href: "/settings", label: "Settings" },
 ];
 
@@ -27,6 +29,7 @@ function NavItems({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNaviga
   const router = useRouter();
   const { user, logOut: firebaseLogOut } = useAuth();
   const { isSidebarCollapsed, setSidebarCollapsed } = useData();
+  const { isPremium } = useSubscription();
 
   const handleLogout = async () => {
     await firebaseLogOut();
@@ -61,7 +64,7 @@ function NavItems({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNaviga
 
       {/* Navigation */}
       <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", gap: "4px", width: "100%" }} className="custom-scrollbar">
-        {NAV_ITEMS.map(({ icon: Icon, href, label }) => {
+        {NAV_ITEMS.map(({ icon: Icon, href, label, isGold }) => {
           const isActive = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
@@ -76,22 +79,80 @@ function NavItems({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNaviga
                 padding: "10px 12px",
                 borderRadius: "12px",
                 textDecoration: "none",
-                background: isActive ? "rgba(139,92,246,0.12)" : "transparent",
-                color: isActive ? "var(--accent-violet-light)" : "var(--text-muted)",
-                borderLeft: isActive ? "3px solid var(--accent-violet)" : "3px solid transparent",
+                background: isActive ? (isGold ? "rgba(245,158,11,0.12)" : "rgba(139,92,246,0.12)") : "transparent",
+                color: isActive 
+                  ? (isGold ? "#fbbf24" : "var(--accent-violet-light)") 
+                  : (isGold ? "#fbbf24" : "var(--text-muted)"),
+                borderLeft: isActive ? `3px solid ${isGold ? "#f59e0b" : "var(--accent-violet)"}` : "3px solid transparent",
                 transition: "all 0.2s ease",
                 fontSize: "0.85rem",
-                fontWeight: 500,
+                fontWeight: isGold ? 600 : 500,
                 justifyContent: isCollapsed ? "center" : "flex-start",
                 overflow: "hidden"
               }}
             >
-              <Icon size={18} style={{ opacity: isActive ? 1 : 0.7, flexShrink: 0 }} />
+              <Icon size={18} style={{ opacity: isActive ? 1 : (isGold ? 0.9 : 0.7), flexShrink: 0 }} />
               {!isCollapsed && <span style={{ whiteSpace: "nowrap" }}>{label}</span>}
             </Link>
           );
         })}
       </div>
+
+      {/* Premium Badge / Upgrade Button */}
+      {isPremium ? (
+        <div style={{
+          margin: "0 4px 8px",
+          padding: "10px 12px",
+          borderRadius: "12px",
+          background: "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(234,179,8,0.08))",
+          border: "1px solid rgba(245,158,11,0.3)",
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          justifyContent: isCollapsed ? "center" : "flex-start",
+        }}>
+          <span style={{ fontSize: "1.1rem" }}>👑</span>
+          {!isCollapsed && (
+            <div>
+              <div style={{ color: "#fbbf24", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.05em" }}>PREMIUM</div>
+              <div style={{ color: "#6b7280", fontSize: "0.65rem" }}>Active</div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <button
+          onClick={() => { router.push("/pricing"); onNavigate?.(); }}
+          style={{
+            margin: "0 4px 8px",
+            padding: isCollapsed ? "10px" : "10px 12px",
+            borderRadius: "12px",
+            fontWeight: 600,
+            fontSize: "0.8rem",
+            background: "linear-gradient(135deg, #7c3aed, #6d28d9)",
+            color: "white",
+            border: "none",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            boxShadow: "0 4px 15px -3px rgba(124,58,237,0.3)",
+            transition: "all 0.2s ease",
+            width: isCollapsed ? "auto" : "calc(100% - 8px)",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.background = "linear-gradient(135deg, #8b5cf6, #7c3aed)";
+            (e.currentTarget as HTMLElement).style.transform = "scale(1.02)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.background = "linear-gradient(135deg, #7c3aed, #6d28d9)";
+            (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+          }}
+        >
+          <span>⚡</span>
+          {!isCollapsed && <span>Upgrade to Premium</span>}
+        </button>
+      )}
 
       {/* Collapse Toggle — Desktop Only Bottom */}
       {!onNavigate && (

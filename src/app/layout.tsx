@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "BriefAI — CEO Morning Briefing Platform",
@@ -34,6 +35,10 @@ export default function RootLayout({
         <meta name="google-site-verification" content="cf4Xkiblsr-E7v7hHNbBGdRATGamFPyZ3hg22A8NUHI" />
       </head>
       <body className="min-h-full antialiased" style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}>
+        <Script
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="lazyOnload"
+        />
         <AuthProvider>
           {children}
         </AuthProvider>

@@ -47,7 +47,7 @@ function resolveServiceAccountPath(explicitPath?: string): string | null {
   return null;
 }
 
-function getAdminDb(): FirebaseFirestore.Firestore {
+export function getAdminDb(): FirebaseFirestore.Firestore {
   if (adminDb) return adminDb;
 
   if (!admin.apps.length) {

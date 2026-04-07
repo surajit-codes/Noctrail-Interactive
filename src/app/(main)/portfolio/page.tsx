@@ -4,15 +4,16 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import AnimatedGrid from "@/components/AnimatedGrid";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
+import PremiumGate from "@/components/PremiumGate";
 import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataContext";
 import { getUserPortfolio, updateUserPortfolio, PortfolioItem } from "@/lib/firebaseClient";
-import { Briefcase, Plus, TrendingDown, TrendingUp, X } from "lucide-react";
+import { Briefcase, Plus, TrendingDown, TrendingUp, X, BrainCircuit } from "lucide-react";
 import SectionHeader from "@/components/SectionHeader";
 
 export default function PortfolioPage() {
   const { user, loading: authLoading } = useAuth();
-  const { marketData, addToast } = useData();
+  const { marketData, briefing, addToast } = useData();
   
   const [items, setItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,9 +33,7 @@ export default function PortfolioPage() {
       return;
     }
     
-    // In a real app we'd fetch live data for the tickers, here we mix actual data with market data roughly
     getUserPortfolio(user.uid).then(data => {
-      // simulate live price updates randomly if they don't have current prices
       const updated = data.map(item => ({
         ...item,
         currentPrice: item.currentPrice || (item.avgPrice * (1 + (Math.random() * 0.1 - 0.05)))
@@ -59,7 +58,7 @@ export default function PortfolioPage() {
       name: newName || newSymbol.toUpperCase(),
       shares: sharesNum,
       avgPrice: priceNum,
-      currentPrice: priceNum // initially same
+      currentPrice: priceNum
     };
     
     const updated = [...items, newItem];
@@ -69,7 +68,6 @@ export default function PortfolioPage() {
       setIsModalOpen(false);
       addToast("Stock added to portfolio", "success");
       
-      // Reset form
       setNewSymbol(""); setNewName(""); setNewShares(""); setNewPrice("");
     } catch (err) {
       addToast("Failed to save portfolio", "error");
@@ -204,7 +202,7 @@ export default function PortfolioPage() {
                 {items.length === 0 && (
                   <tr>
                     <td colSpan={6} className="py-8 text-center text-sm text-[var(--text-muted)] border border-dashed border-[var(--border-subtle)] rounded-xl mt-4 block w-full bg-[rgba(255,255,255,0.02)]">
-                      No holdings in your portfolio. Click "Add Stock" to get started.
+                      No holdings in your portfolio. Click &quot;Add Stock&quot; to get started.
                     </td>
                   </tr>
                 )}
@@ -212,6 +210,36 @@ export default function PortfolioPage() {
             </table>
           </div>
         </div>
+
+        {/* Portfolio AI Advisor — Premium Only */}
+        <PremiumGate feature="Get personalized AI investment advice based on your portfolio">
+          <div className="glass-card p-6">
+            <SectionHeader title="Portfolio AI Advisor" icon={BrainCircuit} />
+            <div className="mt-4 space-y-4">
+              <div className="p-4 rounded-xl border border-[var(--border-subtle)] bg-[rgba(139,92,246,0.05)]">
+                <h4 className="font-bold text-sm text-[var(--accent-violet-light)] mb-2">🤖 Personalized Advice</h4>
+                <p className="text-sm text-[var(--text-secondary)]">
+                  AI analyzes your {items.length} holdings against today&apos;s market conditions to provide
+                  personalized buy/hold/sell recommendations for each stock.
+                </p>
+              </div>
+              <div className="p-4 rounded-xl border border-[var(--border-subtle)] bg-[rgba(16,185,129,0.05)]">
+                <h4 className="font-bold text-sm text-emerald-400 mb-2">📊 Portfolio Rebalancing</h4>
+                <p className="text-sm text-[var(--text-secondary)]">
+                  Smart suggestions to optimize your portfolio allocation based on current market trends
+                  and risk profile.
+                </p>
+              </div>
+              <div className="p-4 rounded-xl border border-[var(--border-subtle)] bg-[rgba(245,158,11,0.05)]">
+                <h4 className="font-bold text-sm text-amber-400 mb-2">⚠️ Risk Assessment</h4>
+                <p className="text-sm text-[var(--text-secondary)]">
+                  Real-time risk scoring for your entire portfolio with sector concentration warnings
+                  and diversification suggestions.
+                </p>
+              </div>
+            </div>
+          </div>
+        </PremiumGate>
       </div>
 
       {/* Add Stock Modal */}

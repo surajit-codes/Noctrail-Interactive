@@ -1,13 +1,69 @@
 import { HfInference } from "@huggingface/inference";
+import { getAdminDb } from "@/lib/firebaseAdmin";
 
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { messages, marketData } = body;
+    const { messages, marketData, userId } = body;
 
     const apiKey = process.env.HUGGINGFACE_API_KEY || process.env.GROQ_CHAT_API_KEY || process.env.GROQ_API_KEY;
+
+    // ─── Rate Limiting for Free Users ───
+    if (userId) {
+      try {
+        const adminDb = getAdminDb();
+        const today = new Date().toISOString().split("T")[0];
+
+        // Check subscription status
+        const subDoc = await adminDb
+          .collection("users")
+          .doc(userId)
+          .collection("subscription")
+          .doc("current")
+          .get();
+
+        let userIsPremium = false;
+        if (subDoc.exists) {
+          const subData = subDoc.data();
+          userIsPremium =
+            subData?.status === "active" &&
+            new Date(subData?.expires_at) > new Date();
+        }
+
+        if (!userIsPremium) {
+          const usageRef = adminDb
+            .collection("users")
+            .doc(userId)
+            .collection("usage")
+            .doc("chat");
+
+          const usageDoc = await usageRef.get();
+          const usage = usageDoc.exists ? usageDoc.data() : null;
+
+          if (usage?.date === today && usage?.count >= 10) {
+            return Response.json(
+              {
+                error: "daily_limit_reached",
+                message:
+                  "You have used all 10 free messages today. Upgrade to Premium for unlimited AI chat! 👑",
+              },
+              { status: 429 }
+            );
+          }
+
+          // Increment count
+          await usageRef.set({
+            date: today,
+            count: (usage?.date === today ? (usage.count || 0) : 0) + 1,
+          });
+        }
+      } catch (rateLimitErr) {
+        // If rate limiting check fails, allow the request through
+        console.warn("Rate limit check failed, allowing request:", rateLimitErr);
+      }
+    }
 
     // Build system context
     let systemContent =
@@ -15,7 +71,6 @@ export async function POST(req: Request) {
 
     if (marketData) {
       try {
-        // Truncate marketData to essential fields to save tokens
         const essentialMarketData = {
           nifty: marketData.nifty?.current_price ? { current_price: marketData.nifty.current_price } : undefined,
           sensex: marketData.sensex?.current_price ? { current_price: marketData.sensex.current_price } : undefined,
@@ -29,16 +84,13 @@ export async function POST(req: Request) {
       }
     }
 
-    // Build clean message array — only user/assistant, starting from first user message
-    // Truncate history to avoid token limit errors (llama-3.1-8b-instant has a 6k limit in some tiers)
     const MAX_HISTORY = 10;
     const allMessages = (messages as Array<{ role: string; content: string }> || [])
       .filter((m) => (m.role === "user" || m.role === "assistant") && m.content?.trim());
     
     const cleanMessages = allMessages
-      .slice(-MAX_HISTORY) // Only take the last 10 messages
+      .slice(-MAX_HISTORY)
       .reduce<Array<{ role: string; content: string }>>((acc, m) => {
-        // skip leading assistant messages if any
         if (acc.length === 0 && m.role === "assistant") return acc;
         return [...acc, m];
       }, []);
@@ -48,7 +100,6 @@ export async function POST(req: Request) {
     }
 
     if (!apiKey) {
-      // Demo mode — no API key
       const demoText = "I'm in demo mode since no HUGGINGFACE API key was set. Add HUGGINGFACE_API_KEY to your .env.local to enable full AI responses.";
       return new Response(`0:${JSON.stringify(demoText)}\n`, {
         headers: { "Content-Type": "text/plain; charset=utf-8", "x-vercel-ai-data-stream": "v1" }
@@ -57,9 +108,8 @@ export async function POST(req: Request) {
 
     const hf = new HfInference(apiKey);
     
-    // Call Hugging Face API directly
     const hfRes = await hf.chatCompletion({
-      model: "meta-llama/Meta-Llama-3-8B-Instruct", // Fast chat model
+      model: "meta-llama/Meta-Llama-3-8B-Instruct",
       messages: [{ role: "system", content: systemContent }, ...(cleanMessages as any)],
       temperature: 0.3,
       max_tokens: 1024,
@@ -67,8 +117,6 @@ export async function POST(req: Request) {
 
     const text: string = hfRes.choices?.[0]?.message?.content ?? "I couldn't generate a response. Please try again.";
 
-    // Return in Vercel AI SDK data stream format so client parser works
-    // The format is "0:" followed by JSON stringified text
     return new Response(`0:${JSON.stringify(text)}\n`, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
