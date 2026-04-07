@@ -43,6 +43,32 @@ export default function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Load chat history
+  useEffect(() => {
+    if (user?.uid) {
+      const saved = localStorage.getItem(`briefai_chat_${user.uid}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setMessages(parsed);
+          }
+        } catch (e) {
+          console.error("Failed to load chat history:", e);
+        }
+      }
+    }
+  }, [user?.uid]);
+
+  // Save chat history
+  useEffect(() => {
+    if (user?.uid && messages !== INITIAL_MESSAGES) {
+      if (messages.length > 1) {
+        localStorage.setItem(`briefai_chat_${user.uid}`, JSON.stringify(messages));
+      }
+    }
+  }, [messages, user?.uid]);
+
   // Auto-scroll to bottom of chat
   useEffect(() => {
     if (bottomRef.current) {
@@ -161,6 +187,9 @@ export default function ChatPage() {
     setInput("");
     setShowUpgradePrompt(false);
     setMessageCount(0);
+    if (user?.uid) {
+      localStorage.removeItem(`briefai_chat_${user.uid}`);
+    }
   };
 
   return (
