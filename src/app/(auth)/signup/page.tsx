@@ -19,11 +19,21 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [minTimePassed, setMinTimePassed] = useState(false);
+
   useEffect(() => {
-    if (user && !loading && !isSigningUp && !isEmailSigningUp) {
+    const timer = setTimeout(() => {
+      setMinTimePassed(true);
+    }, 1500); // 1.5 seconds for quick branding on subpages
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (user && !loading && !isSigningUp && !isEmailSigningUp && minTimePassed) {
       router.push("/dashboard");
     }
-  }, [user, loading, router, isSigningUp, isEmailSigningUp]);
+  }, [user, loading, router, isSigningUp, isEmailSigningUp, minTimePassed]);
 
   const handleGoogleSignUp = async () => {
     setError(null);
@@ -66,7 +76,7 @@ export default function SignUpPage() {
     }
   };
 
-  if (loading || user) {
+  if (loading || (user && !minTimePassed) || (!minTimePassed && !error)) {
     return <Preloader />;
   }
 

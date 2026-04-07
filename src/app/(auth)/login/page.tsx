@@ -19,11 +19,21 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [minTimePassed, setMinTimePassed] = useState(false);
+
   useEffect(() => {
-    if (user && !loading && !isSigningIn && !isEmailSigningIn) {
+    const timer = setTimeout(() => {
+      setMinTimePassed(true);
+    }, 1500); // 1.5 seconds for quick branding on subpages
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (user && !loading && !isSigningIn && !isEmailSigningIn && minTimePassed) {
       router.push("/dashboard");
     }
-  }, [user, loading, router, isSigningIn, isEmailSigningIn]);
+  }, [user, loading, router, isSigningIn, isEmailSigningIn, minTimePassed]);
 
   const handleGoogleSignIn = async () => {
     setError(null);
@@ -72,7 +82,7 @@ export default function LoginPage() {
     }
   };
 
-  if (loading || user) {
+  if (loading || (user && !minTimePassed) || (!minTimePassed && !error)) {
     return <Preloader />;
   }
 
