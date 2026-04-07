@@ -321,7 +321,7 @@ export default function SettingsPage() {
                     <span style={{ fontSize: '1.5rem' }}>📋</span>
                     <div>
                       <div style={{ color: 'white', fontWeight: 700, fontSize: '0.95rem' }}>Free Plan</div>
-                      <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>Limited features • 10 AI messages/day</div>
+                      <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>Limited features • 3 AI messages/day</div>
                     </div>
                   </div>
                 </div>
