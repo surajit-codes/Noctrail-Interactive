@@ -66,9 +66,21 @@ export default function TopBar() {
       <div className="topbar-actions">
         <LiveClock />
 
-        <div className="topbar-icon-btn hidden sm:flex" title="Refresh Briefing" onClick={handleRunNow} style={{ cursor: "pointer" }}>
-          {running ? <Loader2 size={15} className="animate-spin" /> : <RotateCcw size={15} />}
-        </div>
+        <button
+          type="button"
+          className="topbar-icon-btn hidden sm:flex"
+          title="Refresh Briefing"
+          aria-label="Refresh briefing"
+          onClick={handleRunNow}
+        >
+          <span className="topbar-icon-slot">
+            {running ? (
+              <Loader2 size={16} strokeWidth={2} className="topbar-icon-spinner" aria-hidden />
+            ) : (
+              <RotateCcw size={16} strokeWidth={2} aria-hidden />
+            )}
+          </span>
+        </button>
 
         {/* Email Notifications — Coming Soon */}
         <div 

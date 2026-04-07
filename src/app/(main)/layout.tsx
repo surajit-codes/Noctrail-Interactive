@@ -6,6 +6,7 @@ import TopBar from "@/components/TopBar";
 import RightPanel from "@/components/RightPanel";
 import { DataProvider } from "@/context/DataContext";
 import MainContentWrapper from "@/components/MainContentWrapper";
+import ToastStack from "@/components/ToastStack";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -47,6 +48,7 @@ export default function MainLayout({
         </MainContentWrapper>
 
         <RightPanel />
+        <ToastStack />
       </div>
     </DataProvider>
   );

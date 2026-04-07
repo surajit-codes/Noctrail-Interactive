@@ -7,6 +7,37 @@ type PushSubscriptionKeys = { p256dh: string; auth: string };
 
 let adminDb: FirebaseFirestore.Firestore | null = null;
 
+/**
+ * Vercel-friendly: service account split across env vars (matches Firebase JSON fields).
+ * PRIVATE_KEY often contains literal \n — normalize to real newlines.
+ */
+function getServiceAccountFromSplitEnv(): Record<string, string> | null {
+  const projectId = process.env.PROJECT_ID;
+  const clientEmail = process.env.CLIENT_EMAIL;
+  const privateKeyRaw = process.env.PRIVATE_KEY;
+  if (!projectId || !clientEmail || !privateKeyRaw) return null;
+
+  const privateKey = privateKeyRaw.replace(/\\n/g, "\n");
+
+  const account: Record<string, string> = {
+    type: process.env.TYPE || "service_account",
+    project_id: projectId,
+    private_key: privateKey,
+    client_email: clientEmail,
+  };
+
+  if (process.env.PRIVATE_KEY_ID) account.private_key_id = process.env.PRIVATE_KEY_ID;
+  if (process.env.CLIENT_ID) account.client_id = process.env.CLIENT_ID;
+  if (process.env.AUTH_URI) account.auth_uri = process.env.AUTH_URI;
+  if (process.env.TOKEN_URI) account.token_uri = process.env.TOKEN_URI;
+  if (process.env.AUTH_PROVIDER_X509_CERT_URL)
+    account.auth_provider_x509_cert_url = process.env.AUTH_PROVIDER_X509_CERT_URL;
+  if (process.env.CLIENT_X509_CERT_URL)
+    account.client_x509_cert_url = process.env.CLIENT_X509_CERT_URL;
+
+  return account;
+}
+
 function resolveServiceAccountPath(explicitPath?: string): string | null {
   if (explicitPath && fs.existsSync(explicitPath)) return explicitPath;
 
@@ -29,19 +60,26 @@ function getAdminDb(): FirebaseFirestore.Firestore {
         credential: admin.credential.cert(serviceAccount),
       });
     } else {
-      const serviceAccountPath = resolveServiceAccountPath(googleAppCreds);
-      if (!serviceAccountPath) {
-        throw new Error(
-          "Missing Firebase Admin credentials. Set FIREBASE_SERVICE_ACCOUNT_KEY_JSON or provide a valid GOOGLE_APPLICATION_CREDENTIALS path (or place service-account.json in project root)."
-        );
-      }
+      const splitAccount = getServiceAccountFromSplitEnv();
+      if (splitAccount) {
+        admin.initializeApp({
+          credential: admin.credential.cert(splitAccount as admin.ServiceAccount),
+        });
+      } else {
+        const serviceAccountPath = resolveServiceAccountPath(googleAppCreds);
+        if (!serviceAccountPath) {
+          throw new Error(
+            "Missing Firebase Admin credentials. Set FIREBASE_SERVICE_ACCOUNT_KEY_JSON, or PROJECT_ID + CLIENT_EMAIL + PRIVATE_KEY (and optional TYPE, …), or a valid GOOGLE_APPLICATION_CREDENTIALS file path."
+          );
+        }
 
-      const serviceAccount = JSON.parse(
-        fs.readFileSync(serviceAccountPath, "utf8")
-      );
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
+        const serviceAccount = JSON.parse(
+          fs.readFileSync(serviceAccountPath, "utf8")
+        );
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+        });
+      }
     }
   }
 
