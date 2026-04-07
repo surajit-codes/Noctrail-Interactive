@@ -13,6 +13,7 @@ import {
   getDocs,
   getDocFromServer,
   getDocsFromServer,
+  where,
 } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
@@ -73,14 +74,38 @@ export async function getLatestDailyBriefing(): Promise<BriefingData | null> {
   return briefing ?? null;
 }
 
-export async function getDailyBriefingByDate(date: string): Promise<DailyBriefing | null> {
+export async function getDailyBriefingByDate(dateOrId: string): Promise<DailyBriefing | null> {
   const db = getDb();
-  const docRef = doc(db, DAILY_BRIEFINGS_COLLECTION, date);
-  // Bypass cache — always fetch from Firestore server
-  const docSnap = await getDocFromServer(docRef);
-  if (!docSnap.exists()) return null;
+  
+  // 1. Try to query by the 'date' field
+  const q = query(
+    collection(db, DAILY_BRIEFINGS_COLLECTION),
+    where("date", "==", dateOrId)
+  );
+  
+  const snap = await getDocsFromServer(q);
+  
+  let targetDoc: any = null;
+  
+  if (!snap.empty) {
+    // If multiple briefings exist for the same date, take the latest
+    targetDoc = snap.docs.sort((a, b) => {
+      const aTime = new Date((a.data().created_at || a.data().briefing?.generated_at) ?? 0).getTime();
+      const bTime = new Date((b.data().created_at || b.data().briefing?.generated_at) ?? 0).getTime();
+      return bTime - aTime;
+    })[0];
+  } else {
+    // 2. Fallback: try fetching by document ID
+    const docRef = doc(db, DAILY_BRIEFINGS_COLLECTION, dateOrId);
+    const idSnap = await getDocFromServer(docRef);
+    if (idSnap.exists()) {
+      targetDoc = idSnap;
+    }
+  }
 
-  const data = docSnap.data() as {
+  if (!targetDoc) return null;
+
+  const data = targetDoc.data() as {
     date?: string;
     briefing?: BriefingData;
     created_at?: string;
@@ -89,8 +114,8 @@ export async function getDailyBriefingByDate(date: string): Promise<DailyBriefin
   if (!data.briefing) return null;
 
   return {
-    id: docSnap.id,
-    date: data.date ?? docSnap.id,
+    id: targetDoc.id,
+    date: data.date ?? targetDoc.id,
     briefing: data.briefing,
     created_at: data.created_at ?? data.briefing.generated_at ?? new Date().toISOString(),
   };
@@ -137,9 +162,10 @@ export async function getAllDailyBriefingDates(): Promise<string[]> {
 
   // Keep dates list in sync with latest server data.
   const snap = await getDocsFromServer(q);
-  return snap.docs
+  const dates = snap.docs
     .map((d) => (d.data() as { date?: string }).date ?? d.id)
     .filter(Boolean);
+  return Array.from(new Set(dates));
 }
 
 export interface PortfolioItem {
