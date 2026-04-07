@@ -6,7 +6,7 @@ export default function Preloader() {
   const title = "BriefAI";
   const tagline = "CEO Morning Briefing Platform";
 
-  const containerVariants = {
+  const containerVariants: any = {
     initial: { opacity: 0 },
     animate: {
       opacity: 1,
@@ -21,7 +21,7 @@ export default function Preloader() {
     },
   };
 
-  const letterVariants = {
+  const letterVariants: any = {
     initial: { y: 20, opacity: 0 },
     animate: {
       y: 0,
@@ -33,7 +33,7 @@ export default function Preloader() {
     },
   };
 
-  const taglineVariants = {
+  const taglineVariants: any = {
     initial: { opacity: 0, y: 10 },
     animate: {
       opacity: 1,
