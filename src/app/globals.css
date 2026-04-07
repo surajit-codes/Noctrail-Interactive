@@ -932,3 +932,38 @@ body {
   .topbar { padding: 0 1rem; }
   .page-content { padding: 1.25rem 1rem; }
 }
+
+/* ═══════════════════════════════════════════
+   TERMS & CONDITIONS MODAL CONTENT
+═══════════════════════════════════════════ */
+.terms-section-body ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+}
+
+.terms-section-body ul li {
+  position: relative;
+  padding-left: 1.25rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.825rem;
+  line-height: 1.6;
+}
+
+.terms-section-body ul li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #8b5cf6;
+  opacity: 0.6;
+}
+
+.terms-section-body p {
+  margin-bottom: 0.5rem;
+  font-size: 0.825rem;
+  line-height: 1.6;
+}

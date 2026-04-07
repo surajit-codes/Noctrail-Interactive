@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import AnimatedGrid from "@/components/AnimatedGrid";
 import GlassCard from "@/components/GlassCard";
-import { Settings as SettingsIcon, GripVertical, Save, Moon, Sun, Monitor, Crown, AlertTriangle, Database, Download, Trash2, Upload } from "lucide-react";
+import { Settings as SettingsIcon, GripVertical, Save, Moon, Sun, Monitor, Crown, AlertTriangle, Database, Download, Trash2, Upload, ScrollText, X, Shield, CreditCard, Brain, FileText, Scale, Globe, Mail } from "lucide-react";
 import { useData } from "@/context/DataContext";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -95,6 +95,7 @@ export default function SettingsPage() {
   const [isWiping, setIsWiping] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
 
   const displayFonts = [
     { name: "Syne", preview: "Aa Bb Cc" },
@@ -515,6 +516,43 @@ export default function SettingsPage() {
           </GlassCard>
         </motion.div>
 
+        {/* ═══ Terms & Conditions ═══ */}
+        <motion.div variants={itemVariants}>
+          <GlassCard title="Legal" icon={Scale}>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)]">
+              <div>
+                <h4 className="text-sm font-semibold text-white">Terms & Conditions</h4>
+                <p className="text-xs text-[var(--text-muted)] mt-1 max-w-[400px]">
+                  Read our terms of service, privacy policy, and usage guidelines for BriefAI.
+                </p>
+              </div>
+              <button
+                id="view-terms-button"
+                onClick={() => setShowTerms(true)}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl transition-all whitespace-nowrap cursor-pointer"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(109,40,217,0.08))',
+                  border: '1px solid rgba(139,92,246,0.3)',
+                  color: '#a78bfa',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget).style.background = 'rgba(139,92,246,0.2)';
+                  (e.currentTarget).style.borderColor = 'rgba(139,92,246,0.5)';
+                  (e.currentTarget).style.boxShadow = '0 0 20px rgba(139,92,246,0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget).style.background = 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(109,40,217,0.08))';
+                  (e.currentTarget).style.borderColor = 'rgba(139,92,246,0.3)';
+                  (e.currentTarget).style.boxShadow = 'none';
+                }}
+              >
+                <ScrollText size={16} />
+                View Terms & Conditions
+              </button>
+            </div>
+          </GlassCard>
+        </motion.div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Appearance */}
           <motion.div variants={itemVariants}>
@@ -629,6 +667,266 @@ export default function SettingsPage() {
         </div>
 
       </motion.div>
+
+      {/* ═══ Terms & Conditions Modal ═══ */}
+      {showTerms && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
+          onClick={() => setShowTerms(false)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92, y: 30 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="relative w-full max-w-3xl max-h-[85vh] rounded-2xl overflow-hidden"
+            style={{
+              background: 'linear-gradient(180deg, #13131f 0%, #0d0d14 100%)',
+              border: '1px solid rgba(139,92,246,0.25)',
+              boxShadow: '0 0 60px rgba(139,92,246,0.15), 0 25px 50px rgba(0,0,0,0.5)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              className="sticky top-0 z-10 flex items-center justify-between px-6 py-4"
+              style={{
+                background: 'linear-gradient(180deg, #13131f 0%, rgba(19,19,31,0.95) 100%)',
+                borderBottom: '1px solid rgba(139,92,246,0.15)',
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center"
+                  style={{
+                    background: 'linear-gradient(135deg, var(--accent-violet), #6d28d9)',
+                    boxShadow: '0 0 20px rgba(139,92,246,0.35)',
+                  }}
+                >
+                  <ScrollText size={18} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Terms & Conditions</h2>
+                  <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-semibold">Last updated: April 7, 2026</p>
+                </div>
+              </div>
+              <button
+                id="close-terms-button"
+                onClick={() => setShowTerms(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer"
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: 'var(--text-muted)',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget).style.background = 'rgba(239,68,68,0.15)';
+                  (e.currentTarget).style.borderColor = 'rgba(239,68,68,0.3)';
+                  (e.currentTarget).style.color = '#f87171';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget).style.background = 'rgba(255,255,255,0.05)';
+                  (e.currentTarget).style.borderColor = 'rgba(255,255,255,0.1)';
+                  (e.currentTarget).style.color = 'var(--text-muted)';
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="overflow-y-auto p-6 space-y-6" style={{ maxHeight: 'calc(85vh - 72px)' }}>
+
+              {/* Introduction */}
+              <div className="p-4 rounded-xl" style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.15)' }}>
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                  Welcome to <strong className="text-white">BriefAI</strong> (powered by Noctrail Interactive). By accessing or using our platform, you agree to be bound by these Terms and Conditions. Please read them carefully before using our services.
+                </p>
+              </div>
+
+              {/* Section 1 */}
+              <TermsSection icon={Globe} number="1" title="Service Description">
+                <p>BriefAI is an AI-powered CEO Morning Briefing Platform designed for Indian business executives and entrepreneurs. The platform provides:</p>
+                <ul>
+                  <li>AI-generated daily market briefings synthesized from real-time data sources</li>
+                  <li>Interactive AI chat assistant for market analysis and business intelligence</li>
+                  <li>Real-time market data including NIFTY 50, SENSEX, commodities, and currency rates</li>
+                  <li>Portfolio tracking and management tools</li>
+                  <li>Curated business news, global events, and VC funding highlights</li>
+                  <li>Customizable dashboards and alert notifications</li>
+                </ul>
+              </TermsSection>
+
+              {/* Section 2 */}
+              <TermsSection icon={Shield} number="2" title="User Accounts & Authentication">
+                <p>To access BriefAI, you must create an account using Google OAuth or email authentication via Firebase. By creating an account, you agree that:</p>
+                <ul>
+                  <li>You are at least 18 years of age or have parental consent</li>
+                  <li>All information provided during registration is accurate and current</li>
+                  <li>You are responsible for maintaining the security of your account credentials</li>
+                  <li>You will notify us immediately of any unauthorized access to your account</li>
+                  <li>You may not share your account with others or create multiple accounts</li>
+                </ul>
+                <p>We reserve the right to suspend or terminate accounts that violate these terms or engage in suspicious activity.</p>
+              </TermsSection>
+
+              {/* Section 3 */}
+              <TermsSection icon={CreditCard} number="3" title="Subscription & Payments">
+                <p>BriefAI offers both Free and Premium subscription tiers:</p>
+                <ul>
+                  <li><strong className="text-white">Free Plan:</strong> Limited features including 3 AI chat messages per day, basic market data, and standard briefings</li>
+                  <li><strong className="text-white">Premium Plan:</strong> Unlimited AI chat, PDF &amp; Excel exports, deep analysis, portfolio AI advisor, priority briefings, data backup/restore, and a premium badge</li>
+                </ul>
+                <p>Premium subscriptions are billed on a recurring basis. By subscribing, you authorize us to charge your selected payment method. You may cancel your subscription at any time through the Settings page, which will take effect immediately. No refunds will be issued for partial billing periods.</p>
+              </TermsSection>
+
+              {/* Section 4 */}
+              <TermsSection icon={Brain} number="4" title="AI-Generated Content Disclaimer">
+                <div className="p-3 rounded-lg mb-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
+                  <p style={{ color: '#fbbf24', fontWeight: 600, fontSize: '0.8rem' }}>⚠️ Important Investment Disclaimer</p>
+                </div>
+                <p>All AI-generated content on BriefAI, including but not limited to daily briefings, market analysis, sector insights, risk alerts, and chat responses, is provided for <strong className="text-white">informational and educational purposes only</strong>. This content:</p>
+                <ul>
+                  <li>Does <strong className="text-white">NOT</strong> constitute financial, investment, legal, or tax advice</li>
+                  <li>Should <strong className="text-white">NOT</strong> be relied upon as the sole basis for any investment decision</li>
+                  <li>May contain inaccuracies, errors, or hallucinations inherent to AI language models</li>
+                  <li>Is generated using Google Gemini and Groq Llama models, which may produce varying results</li>
+                  <li>Does not guarantee any financial outcome or market prediction accuracy</li>
+                </ul>
+                <p>Always consult with a qualified financial advisor before making investment decisions. Past performance data does not guarantee future results. BriefAI and Noctrail Interactive shall not be held liable for any financial losses incurred based on AI-generated content.</p>
+              </TermsSection>
+
+              {/* Section 5 */}
+              <TermsSection icon={Database} number="5" title="Data Collection & Privacy">
+                <p>We collect and process the following data to provide our services:</p>
+                <ul>
+                  <li><strong className="text-white">Account Data:</strong> Name, email address, profile photo (via Google OAuth / Firebase Auth)</li>
+                  <li><strong className="text-white">Usage Data:</strong> Dashboard preferences, widget configurations, theme settings, and font choices</li>
+                  <li><strong className="text-white">Briefing History:</strong> AI-generated daily briefings stored in Firebase Firestore</li>
+                  <li><strong className="text-white">Portfolio Data:</strong> Stock holdings, transaction history, and portfolio preferences</li>
+                  <li><strong className="text-white">Chat Logs:</strong> Conversations with the AI assistant for context continuity</li>
+                </ul>
+                <p>Your data is stored securely on Firebase (Google Cloud) infrastructure. We do not sell, share, or distribute your personal data to third parties for advertising purposes. You may request data export (backup) or complete data deletion (wipe) at any time through the Settings page.</p>
+              </TermsSection>
+
+              {/* Section 6 */}
+              <TermsSection icon={Globe} number="6" title="Third-Party Services & APIs">
+                <p>BriefAI integrates with the following third-party services:</p>
+                <ul>
+                  <li><strong className="text-white">Google Gemini API</strong> — AI-powered briefing generation and analysis</li>
+                  <li><strong className="text-white">Groq API (Llama Models)</strong> — Real-time AI chat assistant</li>
+                  <li><strong className="text-white">Yahoo Finance 2</strong> — Market data, stock prices, and financial metrics</li>
+                  <li><strong className="text-white">GNews API</strong> — Curated news articles and headlines</li>
+                  <li><strong className="text-white">Firebase (Google)</strong> — Authentication, database, and hosting</li>
+                </ul>
+                <p>These services are governed by their own terms of service and privacy policies. We are not responsible for any downtime, data handling practices, or changes in third-party service availability.</p>
+              </TermsSection>
+
+              {/* Section 7 */}
+              <TermsSection icon={FileText} number="7" title="Intellectual Property">
+                <p>All content, designs, code, branding, logos, and UI elements of BriefAI are the intellectual property of Noctrail Interactive and its developers — Surajit Mondal, Sayandeep Pradhan, and Samiran De. You may not:</p>
+                <ul>
+                  <li>Copy, reproduce, or redistribute any part of the platform without written permission</li>
+                  <li>Reverse-engineer, decompile, or attempt to extract the source code</li>
+                  <li>Use scraping tools, bots, or automated scripts to extract data from the platform</li>
+                  <li>Modify, create derivative works from, or commercially exploit the platform content</li>
+                  <li>Remove or alter any copyright, trademark, or proprietary notices</li>
+                </ul>
+              </TermsSection>
+
+              {/* Section 8 */}
+              <TermsSection icon={Shield} number="8" title="Acceptable Use Policy">
+                <p>By using BriefAI, you agree <strong className="text-white">NOT</strong> to:</p>
+                <ul>
+                  <li>Use the platform for any illegal or unauthorized purpose</li>
+                  <li>Attempt to gain unauthorized access to other users&apos; accounts or data</li>
+                  <li>Interfere with or disrupt the platform&apos;s infrastructure or services</li>
+                  <li>Upload malicious code, viruses, or harmful content</li>
+                  <li>Abuse the AI chat system with harmful, offensive, or manipulative prompts</li>
+                  <li>Use the platform to spread misinformation about financial markets</li>
+                  <li>Circumvent any rate limits, access controls, or subscription restrictions</li>
+                </ul>
+              </TermsSection>
+
+              {/* Section 9 */}
+              <TermsSection icon={Scale} number="9" title="Limitation of Liability">
+                <p>To the maximum extent permitted by applicable law:</p>
+                <ul>
+                  <li>BriefAI and Noctrail Interactive provide the platform on an &quot;AS IS&quot; and &quot;AS AVAILABLE&quot; basis without warranties of any kind</li>
+                  <li>We do not guarantee uninterrupted, error-free, or secure access to the platform</li>
+                  <li>We shall not be liable for any indirect, incidental, special, consequential, or punitive damages</li>
+                  <li>Our total liability shall not exceed the amount paid by you for the service in the preceding 12 months</li>
+                  <li>We are not responsible for any investment losses, trading decisions, or financial outcomes resulting from the use of AI-generated content</li>
+                </ul>
+              </TermsSection>
+
+              {/* Section 10 */}
+              <TermsSection icon={FileText} number="10" title="Modifications to Terms">
+                <p>Noctrail Interactive reserves the right to modify these Terms and Conditions at any time. Changes will be effective immediately upon posting to the platform. Continued use of BriefAI after modifications constitutes acceptance of the updated terms. We will make reasonable efforts to notify users of significant changes via email or in-app notifications.</p>
+              </TermsSection>
+
+              {/* Section 11 */}
+              <TermsSection icon={Scale} number="11" title="Governing Law & Dispute Resolution">
+                <p>These Terms shall be governed by and construed in accordance with the laws of India. Any disputes arising from these terms or the use of BriefAI shall be subject to the exclusive jurisdiction of the courts in Kolkata, West Bengal, India.</p>
+              </TermsSection>
+
+              {/* Section 12 */}
+              <TermsSection icon={Mail} number="12" title="Contact Information">
+                <p>For questions, concerns, or requests regarding these Terms and Conditions, please contact the development team:</p>
+                <div className="mt-3 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <p style={{ marginBottom: '0.25rem' }}><strong className="text-white">Noctrail Interactive</strong></p>
+                  <p style={{ marginBottom: '0.25rem' }}>Developers: Surajit Mondal, Sayandeep Pradhan, Samiran De</p>
+                  <p>Platform: BriefAI — AI-Powered CEO Morning Briefing</p>
+                </div>
+              </TermsSection>
+
+              {/* Acceptance Footer */}
+              <div className="pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs text-[var(--text-muted)] text-center leading-relaxed">
+                  By continuing to use BriefAI, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.
+                </p>
+                <div className="flex justify-center mt-4">
+                  <button
+                    onClick={() => setShowTerms(false)}
+                    className="btn-primary px-8 py-2.5 text-sm cursor-pointer"
+                  >
+                    I Understand & Accept
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </>
+  );
+}
+
+/* ═══ Terms Section Component ═══ */
+function TermsSection({ icon: Icon, number, title, children }: { icon: any; number: string; title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-3">
+        <div
+          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{
+            background: 'rgba(139,92,246,0.1)',
+            border: '1px solid rgba(139,92,246,0.2)',
+          }}
+        >
+          <Icon size={14} style={{ color: '#a78bfa' }} />
+        </div>
+        <h3 className="text-sm font-bold text-white">
+          <span style={{ color: '#8b5cf6', marginRight: '0.35rem' }}>{number}.</span>
+          {title}
+        </h3>
+      </div>
+      <div className="terms-section-body pl-10 space-y-2 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+        {children}
+      </div>
+    </div>
   );
 }
