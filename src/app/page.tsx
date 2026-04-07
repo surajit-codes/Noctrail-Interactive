@@ -13,7 +13,7 @@ export default function Home() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setMinTimePassed(true);
-    }, 4500); // 4.5 seconds for branding to ensure text fully animates
+    }, 3500); // 3.5 seconds for branding to ensure text fully animates
 
     return () => clearTimeout(timer);
   }, []);
@@ -23,7 +23,7 @@ export default function Home() {
       if (user) {
         router.push("/dashboard");
       } else {
-        router.push("/login");
+        router.push("/signup");
       }
     }
   }, [user, loading, minTimePassed, router]);
