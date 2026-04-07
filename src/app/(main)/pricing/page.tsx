@@ -148,30 +148,6 @@ export default function PricingPage() {
     }
   };
 
-  // Dev/Test mode: bypass Razorpay, activate premium directly
-  const handleTestActivate = async () => {
-    if (isPremium || isProcessing) return;
-    setIsProcessing(true);
-    try {
-      const result = await fetch('/api/payment/test-activate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user?.uid, plan: billing }),
-      }).then((r) => r.json());
-
-      if (result.success) {
-        addToast('Premium activated (test mode)!', 'success');
-        router.push('/payment/success');
-      } else {
-        addToast('Test activation failed.', 'error');
-      }
-    } catch (err) {
-      console.error('Test activate error:', err);
-      addToast('Test activation failed.', 'error');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   return (
     <>
@@ -479,35 +455,7 @@ export default function PricingPage() {
               Secure payment via Razorpay 🔒
             </p>
 
-            {/* Dev/Test Mode Button */}
-            {!isPremium && (
-              <button
-                onClick={handleTestActivate}
-                disabled={isProcessing}
-                style={{
-                  width: '100%',
-                  marginTop: '0.75rem',
-                  padding: '0.7rem',
-                  borderRadius: '10px',
-                  border: '1px dashed rgba(16,185,129,0.5)',
-                  background: 'rgba(16,185,129,0.08)',
-                  color: '#34d399',
-                  fontWeight: 600,
-                  fontSize: '0.8rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  opacity: isProcessing ? 0.6 : 1,
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = 'rgba(16,185,129,0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = 'rgba(16,185,129,0.08)';
-                }}
-              >
-                🧪 Test Activate Premium (Dev Mode)
-              </button>
-            )}
+
           </motion.div>
         </div>
 
