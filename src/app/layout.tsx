@@ -43,6 +43,15 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <Script id="register-sw" strategy="afterInteractive">
+          {`
+            if ('serviceWorker' in navigator) {
+              window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/pwabuilder-sw.js');
+              });
+            }
+          `}
+        </Script>
         <Analytics />
       </body>
     </html>
