@@ -29,10 +29,10 @@ function CommodityCard({ title, price, change, changePct, outlook, insight, unit
 
   return (
     <div className="stat-card flex flex-col gap-2">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold tracking-wider uppercase" style={{ color: "var(--text-muted)" }}>{title}</span>
+      <div className="flex items-start justify-between gap-2 overflow-hidden">
+        <span className="text-xs font-semibold tracking-wider uppercase truncate" style={{ color: "var(--text-muted)" }}>{title}</span>
         {outlook && (
-          <span className="text-xs font-bold px-2 py-0.5 rounded-full border" style={{
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border flex-shrink-0" style={{
             color: outlook === "UP" || outlook === "STRENGTHENING" ? "#10b981" : outlook === "DOWN" || outlook === "WEAKENING" ? "#ef4444" : "#f59e0b",
             borderColor: "currentColor",
             background: "rgba(255,255,255,0.03)",
@@ -231,7 +231,7 @@ export default function DashboardPage() {
               </div>
             </div>
             {widgets.find(w => w.id === 'commodities')?.active !== false && (
-              <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 <CommodityCard
                   title="Gold (XAU/USD)"
                   price={spot?.gold?.price}

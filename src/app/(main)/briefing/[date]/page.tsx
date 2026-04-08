@@ -271,16 +271,19 @@ export default function BriefingPage() {
                   {widgets.find((w: WidgetConfig) => w.id === 'commodities')?.active !== false && (
                     <GlassCard className="w-full lg:w-2/3 flex-1 overflow-hidden">
                       <SectionHeader icon={<TrendingUp size={14} />}>{i.commodities}</SectionHeader>
-                      <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
                         {[
                           { key: "gold", label: "Gold", data: briefing.commodities.gold },
                           { key: "crude", label: "Crude Oil", data: briefing.commodities.crude_oil },
                           { key: "fx", label: "USD/INR", data: briefing.commodities.usd_inr },
                         ].map(({ key, label, data }) => (
                           <div key={key} className="p-3 rounded-xl space-y-1" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-semibold" style={{ color: "var(--text-muted)" }}>{label}</span>
-                              <span className="text-xs font-bold" style={{ color: data.outlook === "UP" || data.outlook === "STRENGTHENING" ? "#10b981" : data.outlook === "DOWN" || data.outlook === "WEAKENING" ? "#ef4444" : "#f59e0b" }}>
+                            <div className="flex items-start justify-between gap-2 overflow-hidden">
+                              <span className="text-xs font-semibold truncate" style={{ color: "var(--text-muted)" }}>{label}</span>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border flex-shrink-0" style={{ 
+                                color: data.outlook === "UP" || data.outlook === "STRENGTHENING" ? "#10b981" : data.outlook === "DOWN" || data.outlook === "WEAKENING" ? "#ef4444" : "#f59e0b",
+                                borderColor: "currentColor"
+                              }}>
                                 {data.outlook}
                               </span>
                             </div>
