@@ -2,17 +2,72 @@
     "name": "BriefAI",
     "short_name": "BriefAI",
     "description": "AI-powered CEO Morning Briefing Platform for Indian executives",
-    "start_url": "/",
+    "id": "/?source=pwa",
+    "start_url": "/?source=pwa",
+    "scope": "/",
     "display": "standalone",
+    "display_override": ["window-controls-overlay", "standalone"],
+    "orientation": "portrait-primary",
     "background_color": "#000000",
     "theme_color": "#000000",
-    "orientation": "portrait-primary",
-    "scope": "/",
+    "lang": "en-IN",
+    "dir": "ltr",
+    "categories": [
+        "finance",
+        "news",
+        "productivity",
+        "business"
+    ],
     "icons": [
         {
             "src": "/logo.svg",
             "sizes": "any",
-            "type": "image/svg+xml"
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "/logo.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "maskable"
         }
-    ]
+    ],
+    "screenshots": [
+        {
+            "src": "/screenshot1.png",
+            "sizes": "1080x2400",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "AI-powered Index Comparison"
+        },
+        {
+            "src": "/screenshot2.png",
+            "sizes": "1080x2400",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Intelligence Overview"
+        },
+        {
+            "src": "/screenshot3.png",
+            "sizes": "1080x2400",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Executive Briefing"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Today's Brief",
+            "url": "/?source=shortcut",
+            "description": "Get your daily morning intelligence",
+            "icons": [
+                {
+                    "src": "/logo.svg",
+                    "sizes": "any"
+                }
+            ]
+        }
+    ],
+    "prefer_related_applications": false,
+    "related_applications": []
 }
