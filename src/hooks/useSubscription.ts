@@ -3,11 +3,11 @@
 import { useAuth } from '@/context/AuthContext';
 
 export const useSubscription = () => {
-  const { isPremium, loadingPremium } = useAuth();
+  const { isPremium, loadingPremium, expiresAt } = useAuth();
   
   return { 
     isPremium, 
     isLoading: loadingPremium, 
-    expiresAt: null // Retained for backwards compatibility if needed
+    expiresAt
   };
 };

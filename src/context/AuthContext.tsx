@@ -37,6 +37,7 @@ interface AuthContextType {
   loading: boolean;
   isPremium: boolean;
   loadingPremium: boolean;
+  expiresAt: string | null;
   signInWithGoogle: () => Promise<void>;
   signUpWithGoogle: () => Promise<void>;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
@@ -49,6 +50,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   isPremium: false,
   loadingPremium: true,
+  expiresAt: null,
   signInWithGoogle: async () => {},
   signUpWithGoogle: async () => {},
   signInWithEmail: async () => {},
@@ -61,6 +63,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
   const [loadingPremium, setLoadingPremium] = useState(true);
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
 
   useEffect(() => {
     const auth = getFirebaseAuth();
@@ -81,10 +84,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (subDoc.exists()) {
               const data = subDoc.data();
               const isActive = data?.status === 'active';
-              const notExpired = new Date(data?.expires_at) > new Date();
+              const expiration = data?.expires_at;
+              const notExpired = expiration ? new Date(expiration) > new Date() : false;
               setIsPremium(isActive && notExpired);
+              setExpiresAt(expiration || null);
             } else {
               setIsPremium(false);
+              setExpiresAt(null);
             }
             setLoadingPremium(false);
           }, (err) => {
@@ -95,6 +101,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(null);
           setIsPremium(false);
           setLoadingPremium(false);
+          setExpiresAt(null);
           if (unsubscribeSub) unsubscribeSub();
         }
         setLoading(false);
@@ -192,7 +199,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{
-      user, loading, isPremium, loadingPremium,
+      user, loading, isPremium, loadingPremium, expiresAt,
       signInWithGoogle, signUpWithGoogle,
       signInWithEmail, signUpWithEmail,
       logOut
