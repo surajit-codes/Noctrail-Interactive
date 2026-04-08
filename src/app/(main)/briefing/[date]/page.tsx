@@ -307,7 +307,7 @@ export default function BriefingPage() {
                           <span className="text-xs" style={{ color: "var(--text-muted)" }}>Momentum:</span>
                           <SignalBadge value={s.momentum} />
                         </div>
-                        <a href={getSearchUrl(`${s.name} sector`)} target="_blank" rel="noopener noreferrer" className="text-xs mt-2 flex items-center gap-1 hover:text-[var(--accent-purple)] transition-colors" style={{ color: "var(--text-muted)" }}>
+                        <a href={s.url || getSearchUrl(`${s.name} sector`)} target="_blank" rel="noopener noreferrer" className="text-xs mt-2 flex items-center gap-1 hover:text-[var(--accent-purple)] transition-colors" style={{ color: "var(--text-muted)" }}>
                           <ExternalLink size={10} /> {i.readStory}
                         </a>
                       </GlassCard>
@@ -332,7 +332,7 @@ export default function BriefingPage() {
                         <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{opp.description}</p>
                         <div className="flex items-center justify-between gap-4 mt-2">
                           <div className="text-xs p-2 rounded-lg flex-1" style={{ background: "rgba(0,212,255,0.08)", color: "var(--accent-cyan)" }}>⚡ {opp.action}</div>
-                          <a href={getSearchUrl(opp.title)} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg border border-[var(--text-muted)] border-opacity-20 hover:bg-[var(--accent-cyan)] hover:bg-opacity-10 transition-colors" title="Read Story">
+                          <a href={opp.url || getSearchUrl(opp.title)} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg border border-[var(--text-muted)] border-opacity-20 hover:bg-[var(--accent-cyan)] hover:bg-opacity-10 transition-colors" title="Read Story">
                             <ExternalLink size={12} style={{ color: "var(--text-muted)" }} />
                           </a>
                         </div>
@@ -354,7 +354,7 @@ export default function BriefingPage() {
                         <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{alert.description}</p>
                         <div className="flex items-center justify-between gap-4 mt-2">
                           <div className="text-xs p-2 rounded-lg flex-1" style={{ background: "rgba(245,158,11,0.08)", color: "#f59e0b" }}>🛡️ {alert.mitigation}</div>
-                          <a href={getSearchUrl(alert.title)} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg border border-[var(--text-muted)] border-opacity-20 hover:bg-[#f59e0b] hover:bg-opacity-10 transition-colors" title="Read Story">
+                          <a href={alert.url || getSearchUrl(alert.title)} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg border border-[var(--text-muted)] border-opacity-20 hover:bg-[#f59e0b] hover:bg-opacity-10 transition-colors" title="Read Story">
                             <ExternalLink size={12} style={{ color: "var(--text-muted)" }} />
                           </a>
                         </div>
@@ -381,7 +381,7 @@ export default function BriefingPage() {
                             </div>
                             <span className="text-xs px-2 py-0.5 rounded-full inline-block" style={{ background: "rgba(139,92,246,0.15)", color: "var(--accent-purple)" }}>{vc.sector}</span>
                             <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{vc.insight}</p>
-                            <a href={getSearchUrl(`${vc.company} ${vc.sector} funding`)} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 flex items-center gap-1 hover:text-[var(--accent-purple)] transition-colors" style={{ color: "var(--text-muted)" }}>
+                            <a href={vc.url || getSearchUrl(`${vc.company} ${vc.sector} funding`)} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 flex items-center gap-1 hover:text-[var(--accent-purple)] transition-colors" style={{ color: "var(--text-muted)" }}>
                               <ExternalLink size={10} /> {i.readStory}
                             </a>
                           </div>
@@ -407,7 +407,7 @@ export default function BriefingPage() {
                               <p className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>{ev.event}</p>
                               <div className="flex items-center justify-between mt-1">
                                 <span className="text-xs" style={{ color: ev.impact === "POSITIVE" ? "#10b981" : ev.impact === "NEGATIVE" ? "#ef4444" : "#f59e0b" }}>{ev.impact}</span>
-                                <a href={getSearchUrl(ev.event)} target="_blank" rel="noopener noreferrer" title="Read Story">
+                                <a href={ev.url || getSearchUrl(ev.event)} target="_blank" rel="noopener noreferrer" title="Read Story">
                                   <ExternalLink size={10} style={{ color: "var(--text-muted)" }} />
                                 </a>
                               </div>

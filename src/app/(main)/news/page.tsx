@@ -54,7 +54,7 @@ function NewsCard({
         </div>
         
         <a
-          href={getSearchUrl(headline)}
+          href={url && url.startsWith('http') ? url : getSearchUrl(headline)}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1 text-[10px] font-semibold text-[var(--accent-violet-light)] group-hover:underline"
