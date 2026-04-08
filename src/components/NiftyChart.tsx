@@ -124,7 +124,8 @@ function CanvasCandles({ data }: { data: OHLCVPoint[] }) {
       const high = d.high ?? Math.max(open, close);
       const low = d.low ?? Math.min(open, close);
       const isUp = close >= open;
-      const color = isUp ? "#10b981" : "#ef4444";
+      const color = isUp ? "#10b981" : "#ff4d4d"; // Vibrant Red/Emerald
+      const glowColor = isUp ? "rgba(16,185,129,0.2)" : "rgba(255,77,77,0.2)";
 
       const yH = toY(high);
       const yL = toY(low);
@@ -136,24 +137,29 @@ function CanvasCandles({ data }: { data: OHLCVPoint[] }) {
 
       // Wick
       ctx.strokeStyle = color;
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
       ctx.moveTo(cx, yH);
-      ctx.lineTo(cx, bodyTop);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(cx, bodyTop + bodyH);
       ctx.lineTo(cx, yL);
       ctx.stroke();
+
+      // Body Glow (only for significant candles)
+      if (bodyH > 4) {
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = glowColor;
+      }
 
       // Body
       ctx.fillStyle = color;
       ctx.fillRect(cx - candleW / 2, bodyTop, candleW, bodyH);
 
       // Body border for clarity
-      ctx.strokeStyle = isUp ? "#059669" : "#dc2626";
+      ctx.strokeStyle = isUp ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.1)";
       ctx.lineWidth = 0.5;
       ctx.strokeRect(cx - candleW / 2, bodyTop, candleW, bodyH);
+      
+      // Reset shadow
+      ctx.shadowBlur = 0;
     });
 
     // X-axis labels (every Nth)

@@ -73,6 +73,9 @@ export async function GET() {
       name: "NIFTY 50",
       historical: niftyHistorical.map((d) => ({
         date: d.date.toISOString().split("T")[0],
+        open: (d as any).open ?? d.close,
+        high: (d as any).high ?? d.close,
+        low: (d as any).low ?? d.close,
         close: d.close,
       })),
       current_price: niftyHistorical[niftyHistorical.length - 1]?.close ?? null,
@@ -100,6 +103,9 @@ export async function GET() {
       name: "BSE SENSEX",
       historical: sensexHistorical.map((d) => ({
         date: d.date.toISOString().split("T")[0],
+        open: (d as any).open ?? d.close,
+        high: (d as any).high ?? d.close,
+        low: (d as any).low ?? d.close,
         close: d.close,
       })),
       current_price: sensexHistorical[sensexHistorical.length - 1]?.close ?? null,
