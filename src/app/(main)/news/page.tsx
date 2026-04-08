@@ -6,7 +6,7 @@ import AnimatedGrid from "@/components/AnimatedGrid";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
 import { useData } from "@/context/DataContext";
 import { ExternalLink, Newspaper, BrainCircuit, Loader2 } from "lucide-react";
-import { isValidUrl } from "@/lib/utils";
+import { getSearchUrl } from "@/lib/utils";
 
 const containerVariants = {
   hidden: {},
@@ -52,16 +52,14 @@ function NewsCard({
           <span className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase">{source}</span>
         </div>
         
-        {isValidUrl(url) && (
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-[10px] font-semibold text-[var(--accent-violet-light)] group-hover:underline"
-          >
-            Read Story <ExternalLink size={10} />
-          </a>
-        )}
+        <a
+          href={getSearchUrl(headline)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 text-[10px] font-semibold text-[var(--accent-violet-light)] group-hover:underline"
+        >
+          Read Story <ExternalLink size={10} />
+        </a>
       </div>
     </div>
   );

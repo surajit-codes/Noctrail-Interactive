@@ -11,3 +11,7 @@ export function isValidUrl(url: string | undefined | null): boolean {
     return false;
   }
 }
+export function getSearchUrl(query: string | undefined | null): string {
+  const q = query || "latest business news";
+  return `https://news.google.com/search?q=${encodeURIComponent(q)}`;
+}

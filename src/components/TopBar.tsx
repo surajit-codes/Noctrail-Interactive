@@ -85,19 +85,15 @@ export default function TopBar() {
           </span>
         </button>
 
-        {/* Email Notifications — Coming Soon */}
-        <div 
-          className="topbar-icon-btn hidden md:flex"
-          title="Email Notifications — Coming Soon"
-          style={{ cursor: "default", opacity: 0.5, position: "relative" }}
+        {/* Email Notifications & Contact */}
+        <a 
+          href="mailto:support@briefai.co.in" 
+          className="topbar-icon-btn hidden md:flex hover:text-[var(--accent-violet-light)] transition-colors"
+          title="Contact Support"
+          style={{ cursor: "pointer", position: "relative" }}
         >
           <Mail size={15} />
-          <span style={{
-            position: "absolute", top: 6, right: 6, width: 6, height: 6,
-            background: "var(--accent-amber)", borderRadius: "50%",
-            border: "1.5px solid var(--bg-sidebar)",
-          }} />
-        </div>
+        </a>
 
         <div className="topbar-icon-btn" title="Toggle Theme" onClick={toggleTheme} style={{ cursor: "pointer" }}>
           {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}

@@ -233,10 +233,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Ensure generated_at is set
-    if (!briefing.generated_at) {
-      briefing.generated_at = new Date().toISOString();
-    }
+    // The AI often hallucinates the `generated_at` timestamp. Overwrite it with the actual generation time.
+    briefing.generated_at = new Date().toISOString();
 
     // 3. Save to Firestore (upsert by date)
     const todayDate = new Date().toISOString().split("T")[0];

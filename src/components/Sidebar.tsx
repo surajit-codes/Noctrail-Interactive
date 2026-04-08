@@ -24,7 +24,7 @@ const NAV_ITEMS = [
   { icon: Settings, href: "/settings", label: "Settings" },
 ];
 
-function NavItems({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNavigate?: () => void }) {
+function NavItems({ isCollapsed, onNavigate, hideLogo }: { isCollapsed?: boolean; onNavigate?: () => void; hideLogo?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logOut: firebaseLogOut } = useAuth();
@@ -45,22 +45,28 @@ function NavItems({ isCollapsed, onNavigate }: { isCollapsed?: boolean; onNaviga
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", width: "100%", overflow: "hidden" }}>
       {/* Logo Area */}
-      <div style={{ 
-        display: "flex", 
-        alignItems: "center", 
-        gap: "12px", 
-        marginBottom: "2rem", 
-        padding: isCollapsed ? "0" : "0 8px",
-        justifyContent: isCollapsed ? "center" : "flex-start",
-        transition: "all 0.3s ease"
-      }}>
-        <Image src="/logo.svg" alt="BriefAI" width={32} height={32} style={{ flexShrink: 0 }} />
-        {!isCollapsed && (
-          <span className="display-font" style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "0.02em", whiteSpace: "nowrap" }}>
-            BriefAI
-          </span>
-        )}
-      </div>
+      {!hideLogo && (
+        <Link 
+          href="/dashboard"
+          style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            gap: "12px", 
+            marginBottom: "2rem", 
+            padding: isCollapsed ? "0" : "0 8px",
+            justifyContent: isCollapsed ? "center" : "flex-start",
+            transition: "all 0.3s ease",
+            textDecoration: "none"
+          }}
+        >
+          <Image src="/logo.svg" alt="BriefAI" width={32} height={32} style={{ flexShrink: 0 }} />
+          {!isCollapsed && (
+            <span className="display-font" style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)", letterSpacing: "0.02em", whiteSpace: "nowrap" }}>
+              BriefAI
+            </span>
+          )}
+        </Link>
+      )}
 
       {/* Navigation */}
       <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", display: "flex", flexDirection: "column", gap: "4px", width: "100%" }} className="custom-scrollbar">
@@ -299,10 +305,10 @@ export function MobileSidebar() {
       >
         {/* Header with Close */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
              <Image src="/logo.svg" alt="Logo" width={28} height={28} />
              <span className="display-font" style={{ fontWeight: 700, color: "var(--text-primary)" }}>BriefAI</span>
-          </div>
+          </Link>
           <button
             onClick={() => setMobileMenuOpen(false)}
             style={{
@@ -318,7 +324,7 @@ export function MobileSidebar() {
           </button>
         </div>
 
-        <NavItems onNavigate={() => setMobileMenuOpen(false)} />
+        <NavItems hideLogo onNavigate={() => setMobileMenuOpen(false)} />
       </aside>
     </>
   );
