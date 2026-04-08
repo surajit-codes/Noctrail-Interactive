@@ -40,11 +40,7 @@ export default function PortfolioPage() {
     }
     
     getUserPortfolio(user.uid).then(data => {
-      const updated = data.map(item => ({
-        ...item,
-        currentPrice: item.currentPrice || (item.avgPrice * (1 + (Math.random() * 0.1 - 0.05)))
-      }));
-      setItems(updated);
+      setItems(data);
       setLoading(false);
     });
   }, [user, authLoading]);
@@ -138,9 +134,43 @@ export default function PortfolioPage() {
     );
   }
 
-  // Calculations
-  const totalValue = items.reduce((acc, item) => acc + (item.shares * item.currentPrice), 0);
-  const totalCost = items.reduce((acc, item) => acc + (item.shares * item.avgPrice), 0);
+  // Enhanced Performance Data with Live Prices
+  const performanceData = items.map(item => {
+    // 1. Try to find live price in marketData
+    let livePrice = item.currentPrice || item.avgPrice;
+    
+    if (marketData) {
+      const symbol = item.id.toUpperCase();
+      
+      // 1. Try exact match or suffix-stripped match in leaders
+      const leaderMatch = Object.entries(marketData.leaders || {}).find(([k]) => {
+        const keyBase = k.split('.')[0].toUpperCase().replace('NSE:', '').replace('BOM:', '');
+        return k.toUpperCase() === symbol || keyBase === symbol;
+      });
+
+      if (leaderMatch) {
+        livePrice = (leaderMatch[1] as any).price;
+      } 
+      // 2. Try spot prices (Gold, Oil, Forex)
+      else if (symbol === "GOLD") {
+        livePrice = marketData.spot?.gold?.price || livePrice;
+      } else if (symbol === "USD/INR" || symbol === "USDINR") {
+        livePrice = marketData.spot?.usd_inr?.price || livePrice;
+      } else if (symbol === "CRUDE" || symbol === "CRUDEOIL") {
+        livePrice = marketData.spot?.crude_oil?.price || livePrice;
+      }
+    }
+
+    const cost = item.shares * item.avgPrice;
+    const value = item.shares * livePrice;
+    const pnl = value - cost;
+    const pnlPct = cost > 0 ? (pnl / cost) * 100 : 0;
+
+    return { ...item, livePrice, pnl, pnlPct, currentValue: value, itemCost: cost };
+  }).filter(item => item.shares > 0);
+
+  const totalValue = performanceData.reduce((acc, item) => acc + item.currentValue, 0);
+  const totalCost = performanceData.reduce((acc, item) => acc + item.itemCost, 0);
   const totalPandL = totalValue - totalCost;
   const totalPandLPct = totalCost > 0 ? (totalPandL / totalCost) * 100 : 0;
   
@@ -148,9 +178,9 @@ export default function PortfolioPage() {
 
   // Simulator & Gamification Calcs
   const COLORS = ['#8b5cf6', '#a78bfa', '#c4b5fd', '#34d399', '#10b981', '#f59e0b', '#f87171'];
-  const chartData = items.map(item => ({
+  const chartData = performanceData.map(item => ({
     name: item.id,
-    value: item.shares * item.currentPrice
+    value: item.currentValue
   })).sort((a, b) => b.value - a.value);
 
   const mockDividendYield = 0.015; // 1.5% average dividend yield
@@ -158,14 +188,6 @@ export default function PortfolioPage() {
   
   const assumedReturnRate = 0.15; // 15% CAGR
   const futureValue = totalValue * Math.pow(1 + assumedReturnRate, simYears);
-
-  // Find top and worst performers
-  const performanceData = items.map(item => {
-    const cost = item.shares * item.avgPrice;
-    const value = item.shares * item.currentPrice;
-    const pnlPct = cost > 0 ? ((value - cost) / cost) * 100 : 0;
-    return { ...item, pnlPct };
-  }).filter(item => item.shares > 0);
 
   const topPerformer = performanceData.length > 0 
     ? performanceData.reduce((prev, curr) => (curr.pnlPct > prev.pnlPct ? curr : prev))
@@ -388,12 +410,8 @@ export default function PortfolioPage() {
                 </tr>
               </thead>
               <tbody className="text-sm">
-                {items.map(item => {
-                  const currentValue = item.shares * item.currentPrice;
-                  const itemCost = item.shares * item.avgPrice;
-                  const pnl = currentValue - itemCost;
-                  const pnlPct = (pnl / itemCost) * 100;
-                  const itemIsUp = pnl >= 0;
+                {performanceData.map(item => {
+                  const itemIsUp = item.pnl >= 0;
 
                   return (
                     <tr key={item.id} className="border-b border-[var(--border-subtle)] last:border-0 hover:bg-[rgba(255,255,255,0.02)] transition-colors group">
@@ -413,13 +431,13 @@ export default function PortfolioPage() {
                         </div>
                       </td>
                       <td className="py-4 text-right mono text-[var(--text-secondary)]">₹{item.avgPrice.toLocaleString("en-IN")}</td>
-                      <td className="py-4 text-right mono text-white">₹{item.currentPrice.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</td>
+                      <td className="py-4 text-right mono text-white">₹{item.livePrice.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</td>
                       <td className="py-4 text-right">
                         <div className="mono font-bold" style={{ color: itemIsUp ? "#10b981" : "#ef4444" }}>
-                          {itemIsUp ? "+" : ""}₹{Math.abs(pnl).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                          {itemIsUp ? "+" : ""}₹{Math.abs(item.pnl).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
                         </div>
                         <div className="text-xs font-semibold" style={{ color: itemIsUp ? "#10b981" : "#ef4444" }}>
-                          {itemIsUp ? "+" : ""}{pnlPct.toFixed(2)}%
+                          {itemIsUp ? "+" : ""}{item.pnlPct.toFixed(2)}%
                         </div>
                       </td>
                       <td className="py-4 text-right w-10">

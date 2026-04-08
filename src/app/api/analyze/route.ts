@@ -111,13 +111,15 @@ function compactForPrompt(markets: unknown, news: unknown, currency: unknown) {
     JPY_INR: c.JPY_INR ?? null,
   };
 
-  return { compactMarkets, compactNews, compactCurrency };
+  const compactSentiment = (n.av_sentiment as any) || { feed: [] };
+
+  return { compactMarkets, compactNews, compactCurrency, compactSentiment };
 }
 
 // ─── Build Gemini prompt ───────────────────────────────────────────
 function buildPrompt(markets: unknown, news: unknown, currency: unknown): string {
   const todayDate = new Date().toISOString().split("T")[0];
-  const { compactMarkets, compactNews, compactCurrency } = compactForPrompt(
+  const { compactMarkets, compactNews, compactCurrency, compactSentiment } = compactForPrompt(
     markets,
     news,
     currency
@@ -134,6 +136,9 @@ ${JSON.stringify(compactCurrency, null, 2)}
 
 === NEWS HEADLINES WITH URLS ===
 ${JSON.stringify(compactNews, null, 2)}
+
+=== GLOBAL NEWS SENTIMENT (Alpha Vantage) ===
+${JSON.stringify(compactSentiment, null, 2)}
 
 === TASK ===
 Analyze all the above data and generate a comprehensive CEO Morning Briefing for an Indian business executive.

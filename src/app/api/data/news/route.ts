@@ -50,12 +50,53 @@ async function fetchGNews(
   }
 }
 
+async function fetchAlphaVantageSentiment() {
+  const apiKey = process.env.ALPHA_VANTAGE_API_KEY;
+  if (!apiKey) return { feed: [], error: "ALPHA_VANTAGE_API_KEY not configured" };
+
+  try {
+    const url = new URL("https://www.alphavantage.co/query");
+    url.searchParams.set("function", "NEWS_SENTIMENT");
+    url.searchParams.set("topics", "economy_macro,finance");
+    url.searchParams.set("max_results", "5");
+    url.searchParams.set("apikey", apiKey);
+
+    const res = await fetch(url.toString(), {
+      next: { revalidate: 3600 }, // Cache 1 hour
+    });
+
+    if (!res.ok) throw new Error(`AV API error: ${res.status}`);
+    const data = await res.json();
+    
+    // Check for AV internal errors or limit messages
+    if (data.Information || data.Note) {
+      console.warn("Alpha Vantage limit/info:", data.Information || data.Note);
+      return { feed: [], error: "Limit reached" };
+    }
+
+    return { 
+      feed: (data.feed ?? []).map((item: any) => ({
+        title: item.title,
+        url: item.url,
+        sentiment_score: item.overall_sentiment_score,
+        sentiment_label: item.overall_sentiment_label,
+        ticker_sentiment: item.ticker_sentiment ?? [],
+      })),
+      overall_sentiment_score: data.overall_sentiment_score,
+      overall_sentiment_label: data.overall_sentiment_label,
+    };
+  } catch (err) {
+    return { feed: [], error: String(err) };
+  }
+}
+
 export async function GET() {
-  // Run all 3 GNews calls in parallel
-  const [indiaResult, globalResult, startupResult] = await Promise.all([
+  // Run all GNews calls + Alpha Vantage Sentiment in parallel
+  const [indiaResult, globalResult, startupResult, avSentiment] = await Promise.all([
     fetchGNews("india business economy finance", 8),
     fetchGNews("global economy markets finance stocks", 5),
     fetchGNews("india startup funding venture capital", 5),
+    fetchAlphaVantageSentiment(),
   ]);
 
   const mapArticle = (a: GNewsArticle) => ({
@@ -78,6 +119,10 @@ export async function GET() {
     startup_vc: startupResult.error
       ? { error: startupResult.error, articles: [] }
       : { articles: startupResult.articles.map(mapArticle) },
+
+    av_sentiment: avSentiment.error
+      ? { error: avSentiment.error, feed: [] }
+      : avSentiment,
 
     fetched_at: new Date().toISOString(),
   });
