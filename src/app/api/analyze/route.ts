@@ -214,12 +214,24 @@ export async function POST(request: NextRequest) {
     try {
       briefing = JSON.parse(responseText);
     } catch {
-      // Gemini sometimes wraps JSON in markdown code fences despite responseMimeType
-      const jsonMatch = responseText.match(/```json\n?([\s\S]*?)\n?```/);
-      if (jsonMatch) {
-        briefing = JSON.parse(jsonMatch[1]);
+      // LLMs like Llama-3 sometimes wrap JSON in markdown block OR add leading/trailing text
+      // Let's try to extract via markdown first:
+      const jsonMatch = responseText.match(/```(?:json)?\n?([\s\S]*?)\n?```/);
+      let extracted = jsonMatch ? jsonMatch[1] : responseText;
+      
+      // If still failing or no markdown, aggressively find the first '{' and last '}'
+      const firstBrace = extracted.indexOf("{");
+      const lastBrace = extracted.lastIndexOf("}");
+      
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        extracted = extracted.substring(firstBrace, lastBrace + 1);
+        try {
+          briefing = JSON.parse(extracted);
+        } catch (innerErr) {
+          throw new Error("Failed to parse extracted JSON: " + extracted.substring(0, 200) + "...");
+        }
       } else {
-        throw new Error("Failed to parse Gemini JSON response: " + responseText.substring(0, 200));
+        throw new Error("Failed to locate JSON object in response: " + responseText.substring(0, 200));
       }
     }
 
