@@ -111,7 +111,16 @@ function compactForPrompt(markets: unknown, news: unknown, currency: unknown) {
     JPY_INR: c.JPY_INR ?? null,
   };
 
-  const compactSentiment = (n.av_sentiment as any) || { feed: [] };
+  const av = (n.av_sentiment as any) || { feed: [] };
+  const compactSentiment = {
+    overall_score: av.overall_sentiment_score,
+    overall_label: av.overall_sentiment_label,
+    feed: (av.feed ?? []).slice(0, 3).map((f: any) => ({
+      title: f.title,
+      score: f.sentiment_score,
+      label: f.sentiment_label
+    }))
+  };
 
   return { compactMarkets, compactNews, compactCurrency, compactSentiment };
 }
@@ -211,13 +220,19 @@ export async function POST(request: NextRequest) {
     // 2. Build prompt and call Gemini
     const model = getGeminiModel();
     const prompt = buildPrompt(markets, news, currency);
+    console.log(`[Analyze] Prompt length: ${prompt.length} chars`);
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
+    
+    // Log response status (length)
+    console.log(`[Analyze] AI response received (${responseText.length} chars)`);
+    
     let briefing: BriefingData;
     try {
       briefing = JSON.parse(responseText);
     } catch (err: any) {
+      console.warn("[Analyze] Direct JSON parse failed, attempting extraction...");
       const jsonMatch = responseText.match(/```(?:json)?\n?([\s\S]*?)\n?```/);
       let extracted = jsonMatch ? jsonMatch[1] : responseText;
       
@@ -229,11 +244,11 @@ export async function POST(request: NextRequest) {
         try {
           briefing = JSON.parse(extracted);
         } catch (innerErr: any) {
-          console.error("FULL JSON THAT FAILED TO PARSE:", extracted);
+          console.error("[Analyze] FAILED JSON EXTRACTION:", extracted);
           throw new Error("Failed to parse extracted JSON. Parse Error: " + innerErr.message);
         }
       } else {
-        console.error("FULL RAW RESPONSE TEXT:", responseText);
+        console.error("[Analyze] FULL RAW RESPONSE TEXT:", responseText);
         throw new Error("Failed to locate JSON object in response text.");
       }
     }

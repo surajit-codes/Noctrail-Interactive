@@ -17,31 +17,52 @@ export function getGeminiModel() {
           "Missing Hugging Face API key. Set HUGGINGFACE_API_KEY in .env.local."
         );
       }
-      const completion = await hf.chatCompletion({
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a senior business analyst and investment strategist specializing in Indian markets. " +
-              "You have 20 years of experience. Analyze the provided market data and news and return a comprehensive " +
-              "business intelligence briefing as a JSON object. Be specific, data-driven, and actionable. Never be vague." +
-              " Output ONLY valid JSON matching the exact schema."
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        model: "meta-llama/Meta-Llama-3-8B-Instruct",
-        max_tokens: 2000,
-        temperature: 0.4,
-      });
+      const maxRetries = 3;
+      let lastError: any;
 
-      return {
-        response: {
-          text: () => completion.choices[0]?.message?.content || "{}",
-        },
-      };
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const completion = await hf.chatCompletion({
+            model: "Qwen/Qwen2.5-7B-Instruct",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a senior business analyst and investment strategist specializing in Indian markets. " +
+                  "Analyze market data and news and return a comprehensive briefing as a JSON object. " +
+                  "Output ONLY valid JSON matching the exact schema."
+              },
+              {
+                role: "user",
+                content: prompt,
+              },
+            ],
+            max_tokens: 2000,
+            temperature: 0.3,
+          }, {
+            wait_for_model: true,
+          } as any);
+
+          const responseText = completion.choices[0]?.message?.content || "{}";
+
+          return {
+            response: {
+              text: () => responseText,
+            },
+          };
+        } catch (error: any) {
+          lastError = error;
+          console.error(`[Inference] Attempt ${attempt} failed:`, error.message || error);
+          if (attempt < maxRetries) {
+            const delay = attempt * 3000;
+            console.log(`[Inference] Retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+        }
+      }
+
+      console.error("[Inference] All attempts failed.");
+      throw lastError;
     },
   };
 }
