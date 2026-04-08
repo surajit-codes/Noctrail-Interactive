@@ -11,10 +11,12 @@ import { getUserPortfolio, updateUserPortfolio, PortfolioItem } from "@/lib/fire
 import { Briefcase, Plus, TrendingDown, TrendingUp, X, BrainCircuit, Star, ShieldCheck, Coins, Minus, Calculator, Sparkles, Award, AlertTriangle, PieChart as PieChartIcon } from "lucide-react";
 import SectionHeader from "@/components/SectionHeader";
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
+import { t } from "@/lib/i18n";
 
 export default function PortfolioPage() {
   const { user, loading: authLoading } = useAuth();
-  const { marketData, briefing, addToast } = useData();
+  const { marketData, briefing, addToast, language } = useData();
+  const i = t(language);
   
   const [items, setItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +72,7 @@ export default function PortfolioPage() {
       await updateUserPortfolio(user.uid, updated);
       setItems(updated);
       setIsModalOpen(false);
-      addToast("Stock added to portfolio", "success");
+      addToast(i.addToHoldings || "Stock added to portfolio", "success");
       
       setNewSymbol(""); setNewName(""); setNewShares(""); setNewPrice("");
     } catch (err) {
@@ -99,7 +101,7 @@ export default function PortfolioPage() {
       setItems(updated);
       // Only toast on removal to avoid spamming the user when clicking '+' rapidly
       if (newShares === 0) {
-        addToast("Stock removed", "info");
+        addToast(i.removed || "Stock removed", "info");
       }
     } catch(err) {
       addToast("Failed to update holdings", "error");
@@ -112,7 +114,7 @@ export default function PortfolioPage() {
     try {
       await updateUserPortfolio(user.uid, updated);
       setItems(updated);
-      addToast("Stock removed", "info");
+      addToast(i.removed || "Stock removed", "info");
     } catch(err) {
       addToast("Failed to remove stock", "error");
     }
@@ -131,7 +133,7 @@ export default function PortfolioPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-6">
         <AnimatedGrid />
-        <h2 className="display-font text-2xl font-bold text-white">Log in to view Portfolio</h2>
+        <h2 className="display-font text-2xl font-bold text-white">{i.loginViewPortfolio}</h2>
       </div>
     );
   }
@@ -183,12 +185,12 @@ export default function PortfolioPage() {
           <div className="flex gap-3 overflow-x-auto pb-1 snap-x hide-scrollbar" style={{ scrollbarWidth: 'none' }}>
             {[
               { 
-                label: "NIFTY 50", 
+                label: i.nifty50, 
                 price: marketData.nifty?.current_price, 
                 pct: marketData.nifty?.historical && marketData.nifty.historical.length > 1 ? ((marketData.nifty.current_price - marketData.nifty.historical[marketData.nifty.historical.length-2].close) / marketData.nifty.historical[marketData.nifty.historical.length-2].close) * 100 : 0
               },
               { 
-                label: "SENSEX", 
+                label: i.sensexLabel, 
                 price: marketData.sensex?.current_price, 
                 pct: marketData.sensex?.historical && marketData.sensex.historical.length > 1 ? ((marketData.sensex.current_price - marketData.sensex.historical[marketData.sensex.historical.length-2].close) / marketData.sensex.historical[marketData.sensex.historical.length-2].close) * 100 : 0
               },
@@ -223,7 +225,7 @@ export default function PortfolioPage() {
           <div className="glass-card p-6 flex flex-col justify-between border-l-4 lg:col-span-2" style={{ borderColor: isUp ? "#10b981" : "#ef4444" }}>
             <div className="flex flex-col sm:flex-row justify-between items-start gap-6">
               <div>
-                <div className="text-sm font-semibold tracking-wider uppercase text-[var(--text-muted)] mb-1">Total Portfolio Value</div>
+                <div className="text-sm font-semibold tracking-wider uppercase text-[var(--text-muted)] mb-1">{i.totalPortfolioValue}</div>
                 <div className="flex items-end gap-4">
                   <span className="mono text-4xl sm:text-5xl font-bold text-white">₹{totalValue.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</span>
                   <div className="flex flex-col mb-1.5">
@@ -232,7 +234,7 @@ export default function PortfolioPage() {
                       {isUp ? "+" : ""}₹{Math.abs(totalPandL).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
                     </span>
                     <span className="text-xs font-semibold text-[var(--text-muted)]">
-                      ({isUp ? "+" : ""}{totalPandLPct.toFixed(2)}%) All time
+                      ({isUp ? "+" : ""}{totalPandLPct.toFixed(2)}%) {i.allTime}
                     </span>
                   </div>
                 </div>
@@ -241,7 +243,7 @@ export default function PortfolioPage() {
                 onClick={() => setIsModalOpen(true)}
                 className="btn-primary flex items-center gap-2 text-sm px-5 py-2.5 whitespace-nowrap"
               >
-                <Plus size={16} /> Add Stock
+                <Plus size={16} /> {i.addStock}
               </button>
             </div>
             
@@ -251,7 +253,7 @@ export default function PortfolioPage() {
                   <Coins size={20} />
                 </div>
                 <div>
-                  <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-bold mb-0.5">Est. Annual Dividend</div>
+                  <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-bold mb-0.5">{i.estAnnualDividend}</div>
                   <div className="mono font-bold text-lg text-white">₹{estAnnualDividend.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</div>
                 </div>
               </div>
@@ -262,7 +264,7 @@ export default function PortfolioPage() {
                     <Award size={20} />
                   </div>
                   <div className="w-full min-w-0">
-                    <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-bold mb-0.5">Top Performer</div>
+                    <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-bold mb-0.5">{i.topPerformer}</div>
                     <div className="flex items-baseline justify-between gap-2 w-full">
                       <div className="font-bold text-sm text-white truncate">{topPerformer.id}</div>
                       <div className="mono text-xs font-bold text-emerald-400 flex-shrink-0">+{topPerformer.pnlPct.toFixed(1)}%</div>
@@ -277,7 +279,7 @@ export default function PortfolioPage() {
                     <AlertTriangle size={20} />
                   </div>
                   <div className="w-full min-w-0">
-                    <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-bold mb-0.5">Needs Attention</div>
+                    <div className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-bold mb-0.5">{i.needsAttention}</div>
                     <div className="flex items-baseline justify-between gap-2 w-full">
                       <div className="font-bold text-sm text-white truncate">{worstPerformer.id}</div>
                       <div className="mono text-xs font-bold text-red-400 flex-shrink-0">{worstPerformer.pnlPct.toFixed(1)}%</div>
@@ -289,7 +291,7 @@ export default function PortfolioPage() {
           </div>
           
           <div className="glass-card p-6 flex flex-col items-center justify-center min-h-[200px] relative">
-            <h3 className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-bold mb-2 absolute top-6 left-6">Asset Allocation</h3>
+            <h3 className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-bold mb-2 absolute top-6 left-6">{i.assetAllocation}</h3>
             {items.length > 0 ? (
               <div className="w-full h-[160px] mt-2">
                 <ResponsiveContainer width="100%" height="100%">
@@ -319,7 +321,7 @@ export default function PortfolioPage() {
             ) : (
               <div className="text-sm text-[var(--text-muted)] text-center flex flex-col items-center gap-3 opacity-50">
                 <PieChartIcon size={32} />
-                Add stocks to see allocation
+                {i.addStockToSeeAllocation || "Add stocks to see allocation"}
               </div>
             )}
           </div>
@@ -334,8 +336,8 @@ export default function PortfolioPage() {
                 <Calculator size={20} />
               </div>
               <div>
-                <h3 className="font-bold text-lg text-white flex items-center gap-2">Wealth Simulator <Sparkles size={14} className="text-amber-400" /></h3>
-                <p className="text-xs text-[var(--text-secondary)]">Project your future wealth assuming a 15% historical CAGR.</p>
+                <h3 className="font-bold text-lg text-white flex items-center gap-2">{i.wealthSimulator} <Sparkles size={14} className="text-amber-400" /></h3>
+                <p className="text-xs text-[var(--text-secondary)]">{i.simulatorDesc}</p>
               </div>
             </div>
           </div>
@@ -343,7 +345,7 @@ export default function PortfolioPage() {
           <div className="flex flex-col md:flex-row gap-8 items-center bg-[rgba(255,255,255,0.01)] p-6 rounded-2xl border border-[var(--border-subtle)]">
             <div className="w-full md:w-2/3">
               <div className="flex justify-between text-xs text-white font-bold uppercase tracking-wider mb-4">
-                <span>Hold for {simYears} Year{simYears > 1 ? 's' : ''}</span>
+                <span>{i.holdFor} {simYears} {simYears > 1 ? i.years : i.year}</span>
               </div>
               <input 
                 type="range" 
@@ -354,14 +356,14 @@ export default function PortfolioPage() {
                 className="w-full h-2.5 bg-[rgba(255,255,255,0.1)] rounded-full appearance-none cursor-pointer accent-[var(--accent-violet-light)] outline-none"
               />
               <div className="flex justify-between text-[10px] text-[var(--text-muted)] mt-3 font-bold uppercase tracking-wider">
-                <span>1 Yr</span>
-                <span>15 Yrs</span>
-                <span>30 Yrs</span>
+                <span>1 {i.year}</span>
+                <span>15 {i.years}</span>
+                <span>30 {i.years}</span>
               </div>
             </div>
             
             <div className="w-full md:w-1/3 bg-[rgba(16,185,129,0.08)] border border-emerald-500/30 p-5 rounded-2xl text-center shadow-[0_0_20px_rgba(16,185,129,0.05)]">
-              <div className="text-[10px] text-emerald-400/80 uppercase font-bold tracking-wider mb-1.5">Projected Future Value</div>
+              <div className="text-[10px] text-emerald-400/80 uppercase font-bold tracking-wider mb-1.5">{i.projectedFutureValue}</div>
               <div className="mono text-2xl md:text-3xl font-bold text-emerald-400">
                 ₹{futureValue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
               </div>
@@ -371,17 +373,17 @@ export default function PortfolioPage() {
 
         {/* Holdings Table */}
         <div className="glass-card p-6">
-          <SectionHeader title="Your Holdings" icon={Briefcase} />
+          <SectionHeader title={i.yourHoldings} icon={Briefcase} />
           
           <div className="overflow-x-auto mt-4">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[var(--border-subtle)]">
-                  <th className="pb-3 text-xs font-semibold uppercase text-[var(--text-muted)]">Asset</th>
-                  <th className="pb-3 text-xs font-semibold uppercase text-[var(--text-muted)] text-right">Shares</th>
-                  <th className="pb-3 text-xs font-semibold uppercase text-[var(--text-muted)] text-right">Avg Price</th>
-                  <th className="pb-3 text-xs font-semibold uppercase text-[var(--text-muted)] text-right">LTP</th>
-                  <th className="pb-3 text-xs font-semibold uppercase text-[var(--text-muted)] text-right">P&L</th>
+                  <th className="pb-3 text-xs font-semibold uppercase text-[var(--text-muted)]">{i.asset}</th>
+                  <th className="pb-3 text-xs font-semibold uppercase text-[var(--text-muted)] text-right">{i.shares}</th>
+                  <th className="pb-3 text-xs font-semibold uppercase text-[var(--text-muted)] text-right">{i.avgPrice}</th>
+                  <th className="pb-3 text-xs font-semibold uppercase text-[var(--text-muted)] text-right">{i.ltp}</th>
+                  <th className="pb-3 text-xs font-semibold uppercase text-[var(--text-muted)] text-right">{i.pnl}</th>
                   <th className="pb-3"></th>
                 </tr>
               </thead>
@@ -436,7 +438,7 @@ export default function PortfolioPage() {
                 {items.length === 0 && (
                   <tr>
                     <td colSpan={6} className="py-8 text-center text-sm text-[var(--text-muted)] border border-dashed border-[var(--border-subtle)] rounded-xl mt-4 block w-full bg-[rgba(255,255,255,0.02)]">
-                      No holdings in your portfolio. Click &quot;Add Stock&quot; to get started.
+                      {i.noHoldings || 'No holdings in your portfolio. Click "Add Stock" to get started.'}
                     </td>
                   </tr>
                 )}
@@ -446,9 +448,9 @@ export default function PortfolioPage() {
         </div>
 
         {/* Portfolio AI Advisor — Premium Only */}
-        <PremiumGate feature="Get personalized AI investment advice based on your portfolio">
+        <PremiumGate feature={i.advisorDesc || "Get personalized AI investment advice based on your portfolio"}>
           <div className="glass-card p-6">
-            <SectionHeader title="Portfolio AI Advisor" icon={BrainCircuit} />
+            <SectionHeader title={i.portfolioAdvisor} icon={BrainCircuit} />
             <div className="mt-4 space-y-4">
               <div className="p-4 rounded-xl border border-[var(--border-subtle)] bg-[rgba(139,92,246,0.05)]">
                 <h4 className="font-bold text-sm text-[var(--accent-violet-light)] mb-2">🤖 Personalized Advice</h4>
@@ -476,9 +478,9 @@ export default function PortfolioPage() {
         </PremiumGate>
         
         {/* Curated Expert Picks — Premium Only */}
-        <PremiumGate feature="Access trusted, expert-curated stable wealth compounders">
+        <PremiumGate feature={i.picksDesc || "Access trusted, expert-curated stable wealth compounders"}>
           <div className="glass-card p-6">
-            <SectionHeader title="Premium Stock Picks" icon={ShieldCheck} />
+            <SectionHeader title={i.stockPicks} icon={ShieldCheck} />
             <p className="text-sm text-[var(--text-secondary)] mt-2 mb-6">
               Handpicked, reliable large-cap stocks known for long-term stability and consistent growth. Highly recommended for building a safe core portfolio, similar to top picks on platforms like Groww and Upstox.
             </p>
@@ -527,7 +529,7 @@ export default function PortfolioPage() {
                       }}
                       className="text-xs bg-[var(--accent-violet)] hover:bg-[var(--accent-violet-light)] text-white font-bold py-2 px-3 rounded-lg flex items-center gap-1.5 transition-colors shadow-lg shadow-[var(--accent-violet)]/20"
                     >
-                      <Plus size={14} /> Quick Add
+                      <Plus size={14} /> {i.quickAdd}
                     </button>
                   </div>
                 </div>
@@ -544,16 +546,16 @@ export default function PortfolioPage() {
             <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-[var(--text-muted)] hover:text-white">
               <X size={20} />
             </button>
-            <h3 className="display-font text-xl font-bold mb-6 text-white">Add to Portfolio</h3>
+            <h3 className="display-font text-xl font-bold mb-6 text-white">{i.addStock}</h3>
             
             <form onSubmit={handleAddItem} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-[var(--text-muted)] mb-1.5 uppercase font-bold tracking-wider">Ticker Symbol</label>
+                  <label className="block text-xs text-[var(--text-muted)] mb-1.5 uppercase font-bold tracking-wider">{i.tickerSymbol}</label>
                   <input required autoFocus value={newSymbol} onChange={e => setNewSymbol(e.target.value)} type="text" placeholder="e.g. RELIANCE" className="w-full bg-[rgba(255,255,255,0.05)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-[var(--accent-violet)]" />
                 </div>
                 <div>
-                  <label className="block text-xs text-[var(--text-muted)] mb-1.5 uppercase font-bold tracking-wider">Company Name</label>
+                  <label className="block text-xs text-[var(--text-muted)] mb-1.5 uppercase font-bold tracking-wider">{i.companyName}</label>
                   <input value={newName} onChange={e => setNewName(e.target.value)} type="text" placeholder="Reliance Ind." className="w-full bg-[rgba(255,255,255,0.05)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-[var(--accent-violet)]" />
                 </div>
               </div>
@@ -570,7 +572,7 @@ export default function PortfolioPage() {
               </div>
               
               <button disabled={isSaving} type="submit" className="w-full btn-primary py-3 flex items-center justify-center mt-2 font-bold tracking-wide">
-                {isSaving ? "Saving..." : "Add to Holdings"}
+                {isSaving ? i.saving : i.addToHoldings}
               </button>
             </form>
           </motion.div>

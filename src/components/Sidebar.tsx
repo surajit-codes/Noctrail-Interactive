@@ -11,25 +11,27 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataContext";
 import { useSubscription } from "@/hooks/useSubscription";
-
-const NAV_ITEMS = [
-  { icon: Home, href: "/dashboard", label: "Overview" },
-  { icon: BarChart3, href: "/briefing", label: "Briefing" },
-  { icon: LineChart, href: "/markets", label: "Markets" },
-  { icon: Newspaper, href: "/news", label: "News" },
-  { icon: Briefcase, href: "/portfolio", label: "Portfolio" },
-  { icon: BellRing, href: "/alerts", label: "Alerts" },
-  { icon: MessageSquareText, href: "/chat", label: "AI Chat" },
-  { icon: Crown, href: "/pricing", label: "Pricing", isGold: true },
-  { icon: Settings, href: "/settings", label: "Settings" },
-];
+import { t } from "@/lib/i18n";
 
 function NavItems({ isCollapsed, onNavigate, hideLogo }: { isCollapsed?: boolean; onNavigate?: () => void; hideLogo?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logOut: firebaseLogOut } = useAuth();
-  const { isSidebarCollapsed, setSidebarCollapsed } = useData();
+  const { isSidebarCollapsed, setSidebarCollapsed, language } = useData();
   const { isPremium } = useSubscription();
+  const i = t(language);
+
+  const NAV_ITEMS = [
+    { icon: Home, href: "/dashboard", label: i.overview },
+    { icon: BarChart3, href: "/briefing", label: i.briefing },
+    { icon: LineChart, href: "/markets", label: i.markets },
+    { icon: Newspaper, href: "/news", label: i.news },
+    { icon: Briefcase, href: "/portfolio", label: i.portfolio },
+    { icon: BellRing, href: "/alerts", label: i.alerts },
+    { icon: MessageSquareText, href: "/chat", label: i.aiChat },
+    { icon: Crown, href: "/pricing", label: i.pricing, isGold: true },
+    { icon: Settings, href: "/settings", label: i.settings },
+  ];
 
   const handleLogout = async () => {
     await firebaseLogOut();

@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataContext";
-import { Loader2, LogOut, Mail, Menu, Moon, RotateCcw, Sun } from "lucide-react";
+import { Globe, Loader2, LogOut, Mail, Menu, Moon, RotateCcw, Sun } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useSubscription } from "@/hooks/useSubscription";
+import { LANGUAGES, t } from "@/lib/i18n";
 
 function LiveClock() {
   const [time, setTime] = useState("");
@@ -32,21 +33,24 @@ function LiveClock() {
 
 export default function TopBar() {
   const { user, logOut } = useAuth();
-  const { running, theme, handleRunNow, toggleTheme, setMobileMenuOpen } = useData();
+  const { running, theme, handleRunNow, toggleTheme, setMobileMenuOpen, language, setLanguage } = useData();
   const [showMobileLogout, setShowMobileLogout] = useState(false);
+  const [showLangMenu, setShowLangMenu] = useState(false);
   const pathname = usePathname();
   const { isPremium } = useSubscription();
+  const i = t(language);
 
   // Convert pathname to nice title
   let pageTitle = "BriefAI";
-  if (pathname === "/dashboard") pageTitle = "Overview";
-  else if (pathname === "/briefing") pageTitle = "Executive Briefing";
-  else if (pathname === "/markets") pageTitle = "Markets";
-  else if (pathname === "/news") pageTitle = "News & Alpha";
-  else if (pathname === "/portfolio") pageTitle = "My Portfolio";
-  else if (pathname === "/alerts") pageTitle = "Alerts";
-  else if (pathname === "/chat") pageTitle = "AI Assistant";
-  else if (pathname === "/settings") pageTitle = "Settings";
+  if (pathname === "/dashboard") pageTitle = i.overview;
+  else if (pathname === "/briefing") pageTitle = i.briefing;
+  else if (pathname === "/markets") pageTitle = i.markets;
+  else if (pathname === "/news") pageTitle = i.news;
+  else if (pathname === "/portfolio") pageTitle = i.portfolio;
+  else if (pathname === "/alerts") pageTitle = i.alerts;
+  else if (pathname === "/chat") pageTitle = i.aiChat;
+  else if (pathname === "/settings") pageTitle = i.settings;
+  else if (pathname === "/pricing") pageTitle = i.pricing;
 
   return (
     <header className="topbar">
@@ -95,8 +99,50 @@ export default function TopBar() {
           <Mail size={15} />
         </a>
 
-        <div className="topbar-icon-btn" title="Toggle Theme" onClick={toggleTheme} style={{ cursor: "pointer" }}>
+        <div className="topbar-icon-btn" title={i.toggleTheme} onClick={toggleTheme} style={{ cursor: "pointer" }}>
           {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+        </div>
+
+        {/* Language Selector */}
+        <div className="relative hidden sm:block">
+          <button 
+            className="topbar-icon-btn" 
+            title={i.language}
+            onClick={() => setShowLangMenu(!showLangMenu)} 
+            style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}
+          >
+            <Globe size={15} />
+            <span style={{ fontSize: "0.65rem", fontWeight: 700, color: "var(--text-muted)" }}>
+              {language.toUpperCase()}
+            </span>
+          </button>
+          {showLangMenu && (
+            <div 
+              className="absolute right-0 top-full mt-2 w-44 rounded-xl border border-[var(--border-subtle)] z-50 shadow-xl overflow-hidden"
+              style={{ background: "var(--bg-card)", backdropFilter: "blur(20px)" }}
+            >
+              {LANGUAGES.map(lang => (
+                <button
+                  key={lang.code}
+                  onClick={() => { setLanguage(lang.code); setShowLangMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all hover:bg-[rgba(139,92,246,0.1)]"
+                  style={{ 
+                    background: language === lang.code ? "rgba(139,92,246,0.12)" : "transparent",
+                    borderLeft: language === lang.code ? "3px solid var(--accent-violet)" : "3px solid transparent",
+                  }}
+                >
+                  <span style={{ fontSize: "1rem" }}>{lang.flag}</span>
+                  <div>
+                    <div style={{ fontSize: "0.8rem", fontWeight: 600, color: language === lang.code ? "var(--accent-violet-light)" : "var(--text-primary)" }}>
+                      {lang.nativeName}
+                    </div>
+                    <div style={{ fontSize: "0.65rem", color: "var(--text-muted)" }}>{lang.name}</div>
+                  </div>
+                  {language === lang.code && <span style={{ marginLeft: "auto", color: "var(--accent-violet-light)", fontSize: "0.8rem" }}>✓</span>}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         
         {/* User Avatar */}

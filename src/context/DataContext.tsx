@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import type { BriefingData, DailyBriefing } from "@/lib/briefingTypes";
 import { getDailyBriefingHistory, getLatestDailyBriefing } from "@/lib/firebaseClient";
 import { useAuth } from "./AuthContext";
+import type { Language } from "@/lib/i18n";
 
 export interface Toast {
   id: string;
@@ -51,6 +52,8 @@ interface DataContextType {
   setFontDisplay: (font: string) => void;
   fontBody: string;
   setFontBody: (font: string) => void;
+  language: Language;
+  setLanguage: (lang: Language) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -86,6 +89,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [widgets, setWidgetsState] = useState<WidgetConfig[]>(DEFAULT_WIDGETS);
   const [fontDisplay, setFontDisplayState] = useState("Syne");
   const [fontBody, setFontBodyState] = useState("Inter");
+  const [language, setLanguageState] = useState<Language>("en");
 
   useEffect(() => {
     const savedCollapsed = localStorage.getItem("sidebarCollapsed") === "true";
@@ -117,6 +121,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       setFontBodyState(savedFontBody);
       document.documentElement.style.setProperty('--font-body', savedFontBody);
     }
+
+    const savedLang = localStorage.getItem("language") as Language | null;
+    if (savedLang) {
+      setLanguageState(savedLang);
+    }
   }, []);
 
   const setWidgets = useCallback((newWidgets: WidgetConfig[] | ((prev: WidgetConfig[]) => WidgetConfig[])) => {
@@ -137,6 +146,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     setFontBodyState(font);
     localStorage.setItem("fontBody", font);
     document.documentElement.style.setProperty('--font-body', font);
+  }, []);
+
+  const setLanguage = useCallback((lang: Language) => {
+    setLanguageState(lang);
+    localStorage.setItem("language", lang);
   }, []);
 
   const toggleTheme = useCallback(() => {
@@ -314,6 +328,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     setFontDisplay,
     fontBody,
     setFontBody,
+    language,
+    setLanguage,
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

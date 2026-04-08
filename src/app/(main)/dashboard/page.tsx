@@ -10,6 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataContext";
 import { getUserPortfolio, PortfolioItem } from "@/lib/firebaseClient";
 import { useEffect } from "react";
+import { t } from "@/lib/i18n";
 
 const containerVariants = {
   hidden: {},
@@ -58,9 +59,11 @@ function CommodityCard({ title, price, change, changePct, outlook, insight, unit
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
-  const { briefing, marketData, loading, running, handleRunNow, widgets } = useData();
+  const { briefing, marketData, loading, running, handleRunNow, widgets, language } = useData();
   const [activeTab, setActiveTab] = useState<"6month" | "1year" | "3month" | "1month">("6month");
+  const [chartMode, setChartMode] = useState<"line" | "candle">("line");
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
+  const i = t(language);
 
   useEffect(() => {
     if (user) {
@@ -82,7 +85,7 @@ export default function DashboardPage() {
   }
 
   const currentHour = new Date().getHours();
-  const greeting = currentHour < 12 ? "Good Morning" : currentHour < 18 ? "Good Afternoon" : "Good Evening";
+  const greeting = currentHour < 12 ? i.goodMorning : currentHour < 18 ? i.goodAfternoon : i.goodEvening;
   const temporalWord = currentHour < 12 ? "morning" : currentHour < 18 ? "afternoon" : "evening";
 
   const spot = marketData?.spot;
@@ -102,7 +105,7 @@ export default function DashboardPage() {
       <AnimatedGrid />
       <div className="mb-6 relative z-10">
         <h1 className="text-3xl font-bold display-font text-white">{greeting}, {user?.displayName || "CEO"}!</h1>
-        <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>Here is your {temporalWord} intelligence overview.</p>
+        <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{i.intelligenceOverview}</p>
       </div>
 
       {!briefing ? (
@@ -117,7 +120,7 @@ export default function DashboardPage() {
           }}>
             <BrainCircuit size={38} style={{ color: "var(--accent-violet-light)" }} />
           </div>
-          <h2 className="display-font text-3xl font-bold" style={{ color: "var(--text-primary)" }}>No briefing yet</h2>
+          <h2 className="display-font text-3xl font-bold" style={{ color: "var(--text-primary)" }}>{i.noBriefingYet}</h2>
           <p className="text-base max-w-md text-center" style={{ color: "var(--text-muted)", lineHeight: "1.6" }}>
             Initialize the AI engine to sweep Indian markets, aggregate global news, and generate your CEO briefing.
           </p>
@@ -126,7 +129,7 @@ export default function DashboardPage() {
             className="btn-primary flex items-center gap-3 px-8 py-4 text-sm mt-4"
           >
             {running ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} />}
-            <span>{running ? "Analyzing…" : "Generate Your First Briefing"}</span>
+            <span>{running ? i.generating : i.generateFirstBriefing}</span>
           </button>
         </motion.div>
       ) : (
@@ -136,7 +139,7 @@ export default function DashboardPage() {
             <motion.div variants={itemVariants} className="glass-card p-5 relative overflow-hidden" style={{ borderLeft: "3px solid var(--accent-violet)" }}>
               <div className="gradient-mesh opacity-20" />
               <div className="relative z-10">
-                <div className="text-xs font-bold uppercase tracking-widest text-[var(--accent-violet-light)] mb-2">Executive Summary</div>
+                <div className="text-xs font-bold uppercase tracking-widest text-[var(--accent-violet-light)] mb-2">{i.executiveSummary}</div>
                 <p className="text-sm leading-relaxed text-[var(--text-primary)]">{briefing.executive_summary}</p>
               </div>
             </motion.div>
@@ -153,11 +156,11 @@ export default function DashboardPage() {
                  <div className="mono text-xl font-bold truncate">₹{marketData?.sensex?.current_price?.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</div>
               </div>
               <div className="stat-card min-w-0">
-                 <div className="text-xs text-[var(--text-muted)] mb-1 truncate">Sentiment</div>
+                 <div className="text-xs text-[var(--text-muted)] mb-1 truncate">{i.sentiment}</div>
                  <div className="mono text-xl font-bold text-[var(--accent-violet-light)] truncate">{briefing.market_pulse.sentiment_score * 100}pt</div>
               </div>
               <div className="stat-card min-w-0">
-                 <div className="text-xs text-[var(--text-muted)] mb-1 truncate">Top Sector</div>
+                 <div className="text-xs text-[var(--text-muted)] mb-1 truncate">{i.topSector}</div>
                  <div className="mono text-base font-bold line-clamp-1">{briefing.top_sectors[0]?.name}</div>
               </div>
             </motion.div>
@@ -199,10 +202,10 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 {niftyData.length > 0 ? (
-                  <NiftyChart data={niftyData} name="NIFTY 50" />
+                  <NiftyChart data={niftyData} name="NIFTY 50" mode={chartMode} onModeChange={setChartMode} />
                 ) : (
                   <div className="h-52 flex items-center justify-center text-sm" style={{ color: "var(--text-muted)" }}>
-                    Chart data unavailable
+                    {i.chartUnavailable}
                   </div>
                 )}
               </div>
@@ -213,18 +216,17 @@ export default function DashboardPage() {
             <div className="promo-card">
               <div className="relative z-10">
                 <h3 className="display-font text-xl font-bold mb-2" style={{ color: "white" }}>
-                  Generate New <br/>
-                  <span style={{ color: "var(--accent-violet-light)" }}>Intelligence</span>
+                  {i.generateNewIntelligence}
                 </h3>
                 <p className="text-xs mb-4" style={{ color: "rgba(255,255,255,0.55)", lineHeight: "1.6" }}>
-                  Run the AI pipeline for the latest updates.
+                  {i.runAIPipeline}
                 </p>
                 <button
                   onClick={handleRunNow}
                   className="w-full py-2.5 text-sm font-semibold rounded-xl transition-all"
                   style={{ background: "white", color: "#1a0a40", border: "none", cursor: "pointer" }}
                 >
-                  {running ? "Generating…" : "Refresh Briefing"}
+                  {running ? i.generating : i.refreshBriefing}
                 </button>
               </div>
             </div>
@@ -264,10 +266,10 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {widgets.find(w => w.id === 'opportunities')?.active !== false && (
               <motion.div variants={itemVariants} className="glass-card p-5">
-                <div className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] mb-3">Today's Focus</div>
+                <div className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] mb-3">{i.todaysFocus}</div>
                 <div className="space-y-3">
-                  {briefing.business_opportunities.slice(0, 2).map((opp: any, i: number) => (
-                    <div key={i} className="flex items-start gap-3">
+                  {briefing.business_opportunities.slice(0, 2).map((opp: any, idx: number) => (
+                    <div key={idx} className="flex items-start gap-3">
                       <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent-cyan)] mt-1.5" />
                       <div className="text-sm font-medium text-[var(--text-primary)]">{opp.title}</div>
                     </div>
@@ -278,12 +280,12 @@ export default function DashboardPage() {
 
             {widgets.find(w => w.id === 'portfolio')?.active !== false && (
               <motion.div variants={itemVariants} className="glass-card p-5 border-l-4 border-[var(--accent-green)]">
-                <div className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] mb-3">Portfolio Summary</div>
+                <div className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] mb-3">{i.portfolioSummary}</div>
                 <div className="flex items-end justify-between">
                   <div>
                     <div className="text-2xl font-bold text-white">₹{totalPortfolioValue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</div>
                     <div className="text-xs text-[var(--accent-green)] font-medium mt-1">
-                      {portfolioItems.length} active holdings
+                      {portfolioItems.length} {i.activeHoldings}
                     </div>
                   </div>
                   <TrendingUp className="text-[var(--accent-green)] opacity-50" size={32} />
@@ -293,7 +295,7 @@ export default function DashboardPage() {
 
             {widgets.find(w => w.id === 'vc_funding')?.active !== false && (
               <motion.div variants={itemVariants} className="glass-card p-5 md:col-span-2">
-                <div className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] mb-3">Global Impact</div>
+                <div className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] mb-3">{i.globalImpact}</div>
                 <p className="text-sm line-clamp-2 text-[var(--text-secondary)]">{briefing.world_impact.summary}</p>
               </motion.div>
             )}

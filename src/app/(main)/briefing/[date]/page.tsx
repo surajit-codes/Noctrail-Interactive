@@ -20,6 +20,7 @@ import { useData, WidgetConfig } from "@/context/DataContext";
 import { useAuth } from "@/context/AuthContext";
 import { getAllDailyBriefingDates, getDailyBriefingByDate } from "@/lib/firebaseClient";
 import { getSearchUrl } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const containerVariants: Variants = {
   hidden: {},
@@ -30,7 +31,8 @@ const itemVariants: any = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.4, 0, 0.2, 1] } },
 };
 
-function ConfidenceBar({ value }: { value: number }) {
+function ConfidenceBar({ value, language }: { value: number, language: string }) {
+  const i = t(language as any);
   const [width, setWidth] = useState(0);
   useEffect(() => {
     const t = setTimeout(() => setWidth(value * 100), 400);
@@ -40,7 +42,7 @@ function ConfidenceBar({ value }: { value: number }) {
   return (
     <div className="w-full">
       <div className="flex justify-between text-xs mb-1.5" style={{ color: "var(--text-muted)" }}>
-        <span>Confidence</span>
+        <span>{i.confidence}</span>
         <span className="mono font-semibold" style={{ color }}>{(value * 100).toFixed(0)}%</span>
       </div>
       <div className="w-full rounded-full h-2" style={{ background: "rgba(255,255,255,0.08)" }}>
@@ -51,8 +53,9 @@ function ConfidenceBar({ value }: { value: number }) {
 }
 
 export default function BriefingPage() {
-  const { widgets } = useData();
+  const { widgets, language } = useData();
   const { user } = useAuth();
+  const i = t(language);
   const params = useParams<{ date: string }>();
   const router = useRouter();
   const date = params.date;
@@ -123,10 +126,10 @@ export default function BriefingPage() {
             {/* Breadcrumb */}
             <nav className="flex items-center gap-1.5 text-xs" aria-label="Breadcrumb">
               <Link href="/dashboard" className="transition-colors" style={{ color: "var(--accent-cyan)" }}>
-                Dashboard
+                {i.overview}
               </Link>
               <ChevronRight size={12} style={{ color: "var(--text-muted)" }} />
-              <span style={{ color: "var(--text-muted)" }}>Briefings</span>
+              <span style={{ color: "var(--text-muted)" }}>{i.briefing}</span>
               <ChevronRight size={12} style={{ color: "var(--text-muted)" }} />
               <span style={{ color: "var(--text-primary)" }} className="mono">{date}</span>
             </nav>
@@ -159,7 +162,7 @@ export default function BriefingPage() {
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold"
               style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--text-muted)" }}
             >
-              ← Back to Dashboard
+              ← {i.overview}
             </Link>
           </div>
         </motion.div>
@@ -214,7 +217,7 @@ export default function BriefingPage() {
                 <div className="glass-card relative overflow-hidden" style={{ borderLeft: "3px solid var(--accent-purple)" }}>
                   <div className="gradient-mesh" style={{ opacity: 0.4 }} />
                   <div className="relative z-10 p-6">
-                    <SectionHeader icon={<Image src="/logo.svg" alt="icon" width={18} height={18} />}>Executive Summary</SectionHeader>
+                    <SectionHeader icon={<Image src="/logo.svg" alt="icon" width={18} height={18} />}>{i.executiveSummary}</SectionHeader>
                     <p className="text-base leading-relaxed" style={{ color: "var(--text-primary)" }}>
                       {briefing.executive_summary}
                     </p>
@@ -235,30 +238,30 @@ export default function BriefingPage() {
               <>
                 <motion.div variants={itemVariants} className="flex flex-col lg:flex-row gap-4">
                   <GlassCard className="w-full lg:w-1/3 flex flex-col items-center gap-4 flex-shrink-0">
-                    <SectionHeader icon={<Activity size={14} />}>Market Pulse</SectionHeader>
+                    <SectionHeader icon={<Activity size={14} />}>{i.marketPulse}</SectionHeader>
                     <SentimentGauge score={briefing.market_pulse.sentiment_score} size={160} />
                     <div className="w-full space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm" style={{ color: "var(--text-muted)" }}>Decision</span>
+                        <span className="text-sm" style={{ color: "var(--text-muted)" }}>{i.decisionLabel || 'Decision'}</span>
                         <SignalBadge value={briefing.market_pulse.decision} size="md" />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm" style={{ color: "var(--text-muted)" }}>NIFTY</span>
+                        <span className="text-sm" style={{ color: "var(--text-muted)" }}>{i.nifty50}</span>
                         <SignalBadge value={briefing.market_pulse.nifty_trend} />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm" style={{ color: "var(--text-muted)" }}>SENSEX</span>
+                        <span className="text-sm" style={{ color: "var(--text-muted)" }}>{i.sensexLabel}</span>
                         <SignalBadge value={briefing.market_pulse.sensex_trend} />
                       </div>
-                      <ConfidenceBar value={briefing.market_pulse.confidence} />
+                      <ConfidenceBar value={briefing.market_pulse.confidence} language={language} />
                     </div>
                     <div className="w-full grid grid-cols-2 gap-2">
                       <div className="p-3 rounded-xl" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.15)" }}>
-                        <div className="text-xs" style={{ color: "var(--text-muted)" }}>Support</div>
+                        <div className="text-xs" style={{ color: "var(--text-muted)" }}>{i.support}</div>
                         <div className="mono text-sm font-bold" style={{ color: "#10b981" }}>₹{briefing.market_pulse.key_levels.nifty_support?.toLocaleString("en-IN")}</div>
                       </div>
                       <div className="p-3 rounded-xl" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)" }}>
-                        <div className="text-xs" style={{ color: "var(--text-muted)" }}>Resistance</div>
+                        <div className="text-xs" style={{ color: "var(--text-muted)" }}>{i.resistance}</div>
                         <div className="mono text-sm font-bold" style={{ color: "#ef4444" }}>₹{briefing.market_pulse.key_levels.nifty_resistance?.toLocaleString("en-IN")}</div>
                       </div>
                     </div>
@@ -267,7 +270,7 @@ export default function BriefingPage() {
                   {/* Commodities Tracker — separate check if needed, but linked here in UI */}
                   {widgets.find((w: WidgetConfig) => w.id === 'commodities')?.active !== false && (
                     <GlassCard className="w-full lg:w-2/3 flex-1 overflow-hidden">
-                      <SectionHeader icon={<TrendingUp size={14} />}>Commodities</SectionHeader>
+                      <SectionHeader icon={<TrendingUp size={14} />}>{i.commodities}</SectionHeader>
                       <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
                         {[
                           { key: "gold", label: "Gold", data: briefing.commodities.gold },
@@ -291,10 +294,10 @@ export default function BriefingPage() {
 
                 {/* Top Sectors */}
                 <motion.div variants={itemVariants}>
-                  <SectionHeader icon={<TrendingUp size={14} />}>Top Sectors</SectionHeader>
+                  <SectionHeader icon={<TrendingUp size={14} />}>{i.topSectors}</SectionHeader>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {briefing.top_sectors.map((s, i) => (
-                      <GlassCard key={i} className="space-y-2">
+                    {briefing.top_sectors.map((s, idx) => (
+                      <GlassCard key={idx} className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="font-semibold text-sm display-font" style={{ color: "var(--text-primary)" }}>{s.name}</span>
                           <SignalBadge value={s.signal} />
@@ -305,7 +308,7 @@ export default function BriefingPage() {
                           <SignalBadge value={s.momentum} />
                         </div>
                         <a href={getSearchUrl(`${s.name} sector`)} target="_blank" rel="noopener noreferrer" className="text-xs mt-2 flex items-center gap-1 hover:text-[var(--accent-purple)] transition-colors" style={{ color: "var(--text-muted)" }}>
-                          <ExternalLink size={10} /> Read Story
+                          <ExternalLink size={10} /> {i.readStory}
                         </a>
                       </GlassCard>
                     ))}
@@ -318,10 +321,10 @@ export default function BriefingPage() {
             {widgets.find((w: WidgetConfig) => w.id === 'opportunities')?.active !== false && (
               <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <GlassCard>
-                  <SectionHeader icon={<Briefcase size={14} />}>Business Opportunities</SectionHeader>
+                  <SectionHeader icon={<Briefcase size={14} />}>{i.businessOpportunities}</SectionHeader>
                   <div className="space-y-3">
-                    {briefing.business_opportunities.map((opp, i) => (
-                      <div key={i} className="p-4 rounded-xl space-y-2" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    {briefing.business_opportunities.map((opp, idx) => (
+                      <div key={idx} className="p-4 rounded-xl space-y-2" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
                         <div className="flex items-start justify-between gap-2">
                           <span className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>{opp.title}</span>
                           <SignalBadge value={opp.urgency} />
@@ -339,10 +342,10 @@ export default function BriefingPage() {
                 </GlassCard>
 
                 <GlassCard>
-                  <SectionHeader icon={<AlertTriangle size={14} />}>Risk Alerts</SectionHeader>
+                  <SectionHeader icon={<AlertTriangle size={14} />}>{i.riskAlerts}</SectionHeader>
                   <div className="space-y-3">
-                    {briefing.risk_alerts.map((alert, i) => (
-                      <div key={i} className={`p-4 rounded-xl space-y-2 ${alert.severity === "HIGH" ? "pulse-red" : ""}`}
+                    {briefing.risk_alerts.map((alert, idx) => (
+                      <div key={idx} className={`p-4 rounded-xl space-y-2 ${alert.severity === "HIGH" ? "pulse-red" : ""}`}
                         style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${alert.severity === "HIGH" ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.06)"}` }}>
                         <div className="flex items-start justify-between gap-2">
                           <span className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>{alert.title}</span>
@@ -368,10 +371,10 @@ export default function BriefingPage() {
                 {briefing.vc_funding_highlights?.length > 0 && (
                   <motion.div variants={itemVariants}>
                     <GlassCard>
-                      <SectionHeader icon={<Zap size={14} />}>VC Funding Highlights</SectionHeader>
+                      <SectionHeader icon={<Zap size={14} />}>{i.vcFunding}</SectionHeader>
                       <div className="h-scroll">
-                        {briefing.vc_funding_highlights.map((vc, i) => (
-                          <div key={i} className="w-72 p-4 rounded-xl space-y-2" style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.2)" }}>
+                        {briefing.vc_funding_highlights.map((vc, idx) => (
+                          <div key={idx} className="w-72 p-4 rounded-xl space-y-2" style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.2)" }}>
                             <div className="flex items-center justify-between">
                               <span className="font-semibold text-sm display-font" style={{ color: "var(--text-primary)" }}>{vc.company}</span>
                               <span className="mono text-xs font-bold" style={{ color: "var(--accent-purple)" }}>{vc.amount}</span>
@@ -379,7 +382,7 @@ export default function BriefingPage() {
                             <span className="text-xs px-2 py-0.5 rounded-full inline-block" style={{ background: "rgba(139,92,246,0.15)", color: "var(--accent-purple)" }}>{vc.sector}</span>
                             <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{vc.insight}</p>
                             <a href={getSearchUrl(`${vc.company} ${vc.sector} funding`)} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 flex items-center gap-1 hover:text-[var(--accent-purple)] transition-colors" style={{ color: "var(--text-muted)" }}>
-                              <ExternalLink size={10} /> Read Story
+                              <ExternalLink size={10} /> {i.readStory}
                             </a>
                           </div>
                         ))}
@@ -390,14 +393,14 @@ export default function BriefingPage() {
 
                 <motion.div variants={itemVariants}>
                   <GlassCard>
-                    <SectionHeader icon={<Globe size={14} />}>World Impact</SectionHeader>
+                    <SectionHeader icon={<Globe size={14} />}>{i.worldImpact}</SectionHeader>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       <p className="text-sm leading-relaxed" style={{ color: "var(--text-primary)", lineHeight: "1.7" }}>
                         {briefing.world_impact.summary}
                       </p>
                       <div className="space-y-2">
-                        {briefing.world_impact.key_events.map((ev, i) => (
-                          <div key={i} className="flex items-start gap-3 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)" }}>
+                        {briefing.world_impact.key_events.map((ev, idx) => (
+                          <div key={idx} className="flex items-start gap-3 p-3 rounded-xl" style={{ background: "rgba(255,255,255,0.03)" }}>
                             <div className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
                               style={{ background: ev.impact === "POSITIVE" ? "#10b981" : ev.impact === "NEGATIVE" ? "#ef4444" : "#f59e0b" }} />
                             <div>

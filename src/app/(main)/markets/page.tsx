@@ -10,6 +10,7 @@ import GlassCard from "@/components/GlassCard";
 import { TrendingDown, TrendingUp, BarChart3, Crosshair, ArrowRight } from "lucide-react";
 import SectionHeader from "@/components/SectionHeader";
 import SignalBadge from "@/components/SignalBadge";
+import { t } from "@/lib/i18n";
 
 const containerVariants = {
   hidden: {},
@@ -63,7 +64,8 @@ function CommodityCard({ title, price, change, changePct, outlook, insight, unit
 }
 
 export default function MarketsPage() {
-  const { marketData, briefing, loading } = useData();
+  const { marketData, briefing, loading, language } = useData();
+  const i = t(language);
   const [activeTab, setActiveTab] = useState<"6month" | "1year" | "3month" | "1month">("6month");
 
   if (loading || !marketData) {
@@ -105,8 +107,8 @@ export default function MarketsPage() {
           <div className="glass-card p-6">
             <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
               <div>
-                <SectionHeader title="Index Comparison" icon={BarChart3} />
-                <h2 className="display-font text-xl font-bold mt-1 text-white">NIFTY 50 vs SENSEX</h2>
+                <SectionHeader title={i.indexComparison} icon={BarChart3} />
+                <h2 className="display-font text-xl font-bold mt-1 text-white">{i.nifty50} vs {i.sensexLabel}</h2>
               </div>
               <div className="time-tabs">
                 {(["1year", "6month", "3month", "1month"] as const).map((tab) => (
@@ -115,7 +117,7 @@ export default function MarketsPage() {
                     className={`time-tab ${activeTab === tab ? "active" : ""}`}
                     onClick={() => setActiveTab(tab)}
                   >
-                    {tab === "1year" ? "1 year" : tab === "6month" ? "6 month" : tab === "3month" ? "3 month" : "1 month"}
+                    {tab === "1year" ? i.oneYear : tab === "6month" ? i.sixMonths : tab === "3month" ? i.threeMonths : i.oneMonth}
                   </button>
                 ))}
               </div>
@@ -124,8 +126,8 @@ export default function MarketsPage() {
             <DualChart 
               data1={niftyData} 
               data2={sensexData} 
-              name1="NIFTY 50" 
-              name2="SENSEX" 
+              name1={i.nifty50} 
+              name2={i.sensexLabel} 
               color1="var(--accent-violet)" 
               color2="var(--accent-green)" 
             />
@@ -133,11 +135,11 @@ export default function MarketsPage() {
             <div className="flex flex-wrap items-center gap-6 mt-6 pt-4 border-t border-[var(--border-subtle)]">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-[var(--accent-violet)] shadow-[0_0_10px_var(--accent-violet)]" />
-                <span className="text-sm font-semibold text-[var(--text-primary)]">NIFTY: <span className="font-mono">₹{marketData?.nifty?.current_price?.toLocaleString()}</span></span>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">{i.nifty50}: <span className="font-mono">₹{marketData?.nifty?.current_price?.toLocaleString()}</span></span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-[var(--accent-green)] shadow-[0_0_10px_var(--accent-green)]" />
-                <span className="text-sm font-semibold text-[var(--text-primary)]">SENSEX: <span className="font-mono">₹{marketData?.sensex?.current_price?.toLocaleString()}</span></span>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">{i.sensexLabel}: <span className="font-mono">₹{marketData?.sensex?.current_price?.toLocaleString()}</span></span>
               </div>
             </div>
           </div>
@@ -179,24 +181,24 @@ export default function MarketsPage() {
           {/* Key Support/Resistance */}
           {briefing?.market_pulse?.key_levels && (
             <motion.div variants={itemVariants}>
-              <GlassCard title="Technical Levels (NIFTY)" icon={Crosshair}>
+              <GlassCard title={i.technicalLevels} icon={Crosshair}>
                 <div className="flex flex-col h-full justify-center space-y-8 py-4">
                   
                   <div className="relative p-6 rounded-2xl border border-[rgba(239,68,68,0.2)] bg-[rgba(239,68,68,0.05)] text-center">
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--bg-secondary)] px-3 text-xs font-bold text-red-400 uppercase tracking-wider">Resistance</div>
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--bg-secondary)] px-3 text-xs font-bold text-red-400 uppercase tracking-wider">{i.resistance}</div>
                     <div className="mono text-3xl font-bold text-red-500 text-shadow-red">{briefing.market_pulse.key_levels.nifty_resistance}</div>
                   </div>
 
                   <div className="flex items-center justify-center gap-4 text-[var(--accent-violet-light)]">
                     <ArrowRight size={20} className="rotate-90 opacity-50" />
                     <div className="px-4 py-2 rounded-xl bg-[rgba(139,92,246,0.1)] border border-[rgba(139,92,246,0.2)]">
-                      <span className="mono font-bold">CMP: {marketData?.nifty?.current_price?.toFixed(0)}</span>
+                      <span className="mono font-bold">{i.cmp}: {marketData?.nifty?.current_price?.toFixed(0)}</span>
                     </div>
                     <ArrowRight size={20} className="rotate-90 opacity-50" />
                   </div>
 
                   <div className="relative p-6 rounded-2xl border border-[rgba(16,185,129,0.2)] bg-[rgba(16,185,129,0.05)] text-center">
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--bg-secondary)] px-3 text-xs font-bold text-emerald-400 uppercase tracking-wider">Support</div>
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--bg-secondary)] px-3 text-xs font-bold text-emerald-400 uppercase tracking-wider">{i.support}</div>
                     <div className="mono text-3xl font-bold text-emerald-500 text-shadow-green">{briefing.market_pulse.key_levels.nifty_support}</div>
                   </div>
 
@@ -208,7 +210,7 @@ export default function MarketsPage() {
           {/* Sector Performance */}
           {briefing?.top_sectors && (
             <motion.div variants={itemVariants}>
-              <GlassCard title="Sector Momentum" icon={BarChart3}>
+              <GlassCard title={i.sectorMomentum} icon={BarChart3}>
                 <div className="space-y-4">
                   {briefing.top_sectors.map((sector, idx) => (
                     <div key={idx} className="p-4 rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] transition-all hover:bg-[rgba(255,255,255,0.04)]">
@@ -217,7 +219,7 @@ export default function MarketsPage() {
                         <SignalBadge value={sector.signal} size="sm" />
                       </div>
                       <div className="flex items-center gap-2 text-xs text-[var(--text-muted)] mb-2">
-                        Momentum: <strong className={sector.momentum === "STRONG" ? "text-green-400" : sector.momentum === "WEAK" ? "text-red-400" : "text-amber-400"}>{sector.momentum}</strong>
+                        {i.momentumLabel}: <strong className={sector.momentum === "STRONG" ? "text-green-400" : sector.momentum === "WEAK" ? "text-red-400" : "text-amber-400"}>{sector.momentum}</strong>
                       </div>
                       
                       {/* Fake performance bar based on signal/momentum to visualize "Sector performance chart" loosely */}

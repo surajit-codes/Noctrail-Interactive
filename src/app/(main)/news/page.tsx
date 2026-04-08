@@ -7,6 +7,7 @@ import LoadingSkeleton from "@/components/LoadingSkeleton";
 import { useData } from "@/context/DataContext";
 import { ExternalLink, Newspaper, BrainCircuit, Loader2 } from "lucide-react";
 import { getSearchUrl } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 
 const containerVariants = {
   hidden: {},
@@ -27,7 +28,7 @@ function NewsCard({
   tagColor = "var(--accent-violet)",
   url
 }: { 
-  headline: string, source: string, insight: string, date?: string, tag: string, tagColor?: string, url?: string 
+  headline: string, source: string, insight: string, date?: string, tag: string, tagColor?: string, url?: string, readStoryLabel?: string 
 }) {
   return (
     <div className="group glass-card p-5 h-full flex flex-col hover:bg-[rgba(255,255,255,0.06)] transition-all">
@@ -66,8 +67,9 @@ function NewsCard({
 }
 
 export default function NewsPage() {
-  const { briefing, loading, running, handleRunNow } = useData();
+  const { briefing, loading, running, handleRunNow, language } = useData();
   const [activeTab, setActiveTab] = useState<"business" | "world" | "vc">("business");
+  const i = t(language);
 
   // Auto refresh every 30 minutes (30 * 60 * 1000 ms = 1,800,000 ms)
   useEffect(() => {
@@ -130,7 +132,7 @@ export default function NewsPage() {
             <div className="flex items-center gap-2 mb-2">
               <BrainCircuit size={16} className="text-[var(--accent-violet-light)]" />
               <span className="text-[10px] font-bold text-[var(--accent-violet-light)] uppercase tracking-widest">
-                AI Curated Feed
+                {i.aiCuratedFeed}
               </span>
             </div>
             {running && (
@@ -151,7 +153,7 @@ export default function NewsPage() {
                   : "text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[rgba(255,255,255,0.03)]"
                 }`}
               >
-                {tab === "business" ? "Business" : tab === "world" ? "World" : "VC Funding"}
+                {tab === "business" ? i.business : tab === "world" ? i.world : i.vcFunding}
               </button>
             ))}
           </div>

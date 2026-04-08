@@ -6,7 +6,7 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { messages, marketData, userId } = body;
+    const { messages, marketData, userId, language } = body;
 
     const apiKey = process.env.HUGGINGFACE_API_KEY || process.env.GROQ_CHAT_API_KEY || process.env.GROQ_API_KEY;
 
@@ -70,6 +70,19 @@ export async function POST(req: Request) {
       "You are BriefAI, an advanced AI assistant for the CEO of an Indian business. You are professional, highly analytical, and extremely concise. Format your answers with markdown (bold, bullets). Keep responses focused and actionable.\n\n" +
       "CRITICAL RULE: You must ONLY answer questions related to business, markets, stocks, finance, startups, VC funding, portfolio management, and corporate briefings.\n" +
       "If the user asks about an entirely unrelated or irrelevant topic (e.g. general trivia, coding tasks, recipes, entertainment), politely REFUSE to answer. State clearly that your expertise is strictly limited to business and financial domains, and prompt the user to ask a relevant CEO-level question instead. Do not provide ANY answer to irrelevant queries.";
+
+    // Multi-language support
+    if (language && language !== "en") {
+      const langNames: Record<string, string> = {
+        hi: "Hindi (Devanagari script)",
+        bn: "Bengali (Bangla script)",
+        ta: "Tamil (Tamil script)",
+        te: "Telugu (Telugu script)",
+        mr: "Marathi (Devanagari script)",
+      };
+      const langName = langNames[language] || language;
+      systemContent += `\n\nLANGUAGE INSTRUCTION: You MUST respond entirely in ${langName}. Use the appropriate script for that language. Do NOT respond in English unless the user explicitly asks for English.`;
+    }
 
     if (marketData) {
       try {

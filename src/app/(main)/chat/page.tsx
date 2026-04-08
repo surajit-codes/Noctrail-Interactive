@@ -8,6 +8,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useRouter } from "next/navigation";
 import { BrainCircuit, Send, Trash2, User, Sparkles, Crown, MessageSquarePlus, MessageSquare, Menu, X, Lock } from "lucide-react";
 import { Message, ChatThread, getChatThreads, saveChatThread, deleteChatThread } from "@/lib/firebaseClient";
+import { t } from "@/lib/i18n";
 
 const INITIAL_MESSAGES: Message[] = [
   {
@@ -25,10 +26,11 @@ const QUICK_PROMPTS = [
 ];
 
 export default function ChatPage() {
-  const { marketData } = useData();
+  const { marketData, language } = useData();
   const { user } = useAuth();
   const { isPremium } = useSubscription();
   const router = useRouter();
+  const i = t(language);
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -102,7 +104,7 @@ export default function ChatPage() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages, marketData, userId: user?.uid }),
+        body: JSON.stringify({ messages: apiMessages, marketData, userId: user?.uid, language }),
       });
 
       if (!res.ok) {
@@ -234,7 +236,7 @@ export default function ChatPage() {
         
         {/* Header */}
         <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between">
-          <h3 className="font-bold text-xs text-[var(--accent-violet-light)] tracking-wider uppercase">Chat History</h3>
+          <h3 className="font-bold text-xs text-[var(--accent-violet-light)] tracking-wider uppercase">{i.chatHistory}</h3>
           <button className="lg:hidden p-1.5 text-[var(--text-muted)] hover:text-white transition-colors" onClick={() => setIsSidebarOpen(false)}>
             <X size={18} />
           </button>
@@ -246,16 +248,16 @@ export default function ChatPage() {
                <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center mb-3 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
                  <Lock size={24} />
                </div>
-               <h4 className="font-bold text-sm text-white mb-2">Cloud Sync Locked</h4>
+               <h4 className="font-bold text-sm text-white mb-2">{i.cloudSyncLocked}</h4>
                <p className="text-[11px] text-[var(--text-muted)] leading-relaxed mb-4">Upgrade to Premium to instantly save, load, and resume all your previous AI strategy sessions.</p>
                <button onClick={() => router.push("/pricing")} className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg text-xs font-bold text-black shadow-lg shadow-amber-500/20 w-full hover:scale-105 transition-transform">
-                 Unlock Premium
+                 {i.unlockPremium}
                </button>
              </div>
            ) : (
              <>
                <button onClick={startNewChat} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-dashed border-[var(--border-subtle)] hover:bg-[rgba(255,255,255,0.05)] transition-colors text-sm text-[var(--text-primary)]">
-                 <MessageSquarePlus size={16} /> New Chat
+                 <MessageSquarePlus size={16} /> {i.newChat}
                </button>
                <div className="pt-2 space-y-1.5">
                  {threads.map(t => (
@@ -467,10 +469,10 @@ export default function ChatPage() {
             <div className="mb-4">
               <span className="text-[10px] uppercase font-bold tracking-widest text-[var(--text-muted)] flex items-center gap-1.5 mb-2.5">
                 <Sparkles size={11} className="text-amber-400" />
-                Quick Actions
+                {i.quickActions}
               </span>
               <div className="flex flex-wrap gap-2">
-                {QUICK_PROMPTS.map((p) => (
+                {[i.summarizeMarket, i.topRisks, i.bestSectors, i.vcHighlights].map((p) => (
                   <button
                     key={p}
                     onClick={() => sendMessage(p)}
@@ -490,7 +492,7 @@ export default function ChatPage() {
               onChange={(e) => setInput(e.target.value)}
               disabled={isLoading || (showUpgradePrompt && !isPremium)}
               className="flex-1 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] focus:border-[rgba(139,92,246,0.5)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] transition-all outline-none"
-              placeholder={showUpgradePrompt && !isPremium ? "Upgrade to Premium for more messages..." : "Ask me anything..."}
+              placeholder={showUpgradePrompt && !isPremium ? i.upgradeForUnlimited : i.askMeAnything}
             />
             <button
               type="submit"

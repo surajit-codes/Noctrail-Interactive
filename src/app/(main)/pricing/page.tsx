@@ -7,57 +7,62 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useData } from '@/context/DataContext';
 import AnimatedGrid from '@/components/AnimatedGrid';
+import { t } from '@/lib/i18n';
 
-const FREE_FEATURES = [
-  { text: 'Daily AI briefing', included: true },
-  { text: 'Basic market data', included: true },
-  { text: '3 price alerts', included: true },
-  { text: 'News feed', included: true },
-  { text: 'AI Chat (3 msg/day)', included: true },
-  { text: 'Basic portfolio tracker', included: true },
-  { text: 'Advanced AI analysis', included: false },
-  { text: 'Portfolio AI advisor', included: false },
-  { text: 'PDF/Excel export', included: false },
-  { text: 'Unlimited AI chat', included: false },
-];
+const getFeatures = (ii: any) => ({
+  free: [
+    { text: ii.freeFeature1 || 'Daily AI briefing', included: true },
+    { text: ii.freeFeature2 || 'Basic market data', included: true },
+    { text: ii.freeFeature3 || '3 price alerts', included: true },
+    { text: ii.freeFeature4 || 'News feed', included: true },
+    { text: ii.freeFeature5 || 'AI Chat (3 msg/day)', included: true },
+    { text: ii.freeFeature6 || 'Basic portfolio tracker', included: true },
+    { text: ii.freeFeature7 || 'Advanced AI analysis', included: false },
+    { text: ii.freeFeature8 || 'Portfolio AI advisor', included: false },
+    { text: ii.freeFeature9 || 'PDF/Excel export', included: false },
+    { text: ii.freeFeature10 || 'Unlimited AI chat', included: false },
+  ],
+  premium: [
+    { text: ii.premiumFeature1 || 'Everything in Free', included: true },
+    { text: ii.premiumFeature2 || 'Advanced AI deep analysis', included: true },
+    { text: ii.premiumFeature3 || 'Portfolio AI advisor', included: true },
+    { text: ii.premiumFeature4 || 'PDF & Excel export', included: true },
+    { text: ii.premiumFeature5 || 'Unlimited AI chat', included: true },
+    { text: ii.premiumFeature6 || 'Priority email briefings', included: true },
+    { text: ii.premiumFeature7 || 'Premium badge 👑', included: true },
+    { text: ii.premiumFeature8 || 'Early access to features', included: true },
+  ],
+});
 
-const PREMIUM_FEATURES = [
-  { text: 'Everything in Free', included: true },
-  { text: 'Advanced AI deep analysis', included: true },
-  { text: 'Portfolio AI advisor', included: true },
-  { text: 'PDF & Excel export', included: true },
-  { text: 'Unlimited AI chat', included: true },
-  { text: 'Priority email briefings', included: true },
-  { text: 'Premium badge 👑', included: true },
-  { text: 'Early access to features', included: true },
-];
-
-const FAQS = [
+const getFAQs = (ii: any) => [
   {
-    q: 'Can I cancel anytime?',
-    a: "Yes! Cancel anytime from your settings. No questions asked.",
+    q: ii.faqQ1 || 'Can I cancel anytime?',
+    a: ii.faqA1 || 'Yes! Cancel anytime from your settings. No questions asked.',
   },
   {
-    q: 'Is my payment secure?',
-    a: "100% secure via Razorpay, India's most trusted payment gateway.",
+    q: ii.faqQ2 || 'Is my payment secure?',
+    a: ii.faqA2 || "100% secure via Razorpay, India's most trusted payment gateway.",
   },
   {
-    q: 'What happens when I upgrade?',
-    a: 'Premium features unlock instantly after payment confirmation.',
+    q: ii.faqQ3 || 'What happens when I upgrade?',
+    a: ii.faqA3 || 'Premium features unlock instantly after payment confirmation.',
   },
   {
-    q: 'Do you offer refunds?',
-    a: 'Yes, we offer full refund within 7 days of purchase.',
+    q: ii.faqQ4 || 'Do you offer refunds?',
+    a: ii.faqA4 || 'Yes, we offer full refund within 7 days of purchase.',
   },
 ];
 
 export default function PricingPage() {
   const { user } = useAuth();
   const { isPremium, isLoading } = useSubscription();
-  const { addToast } = useData();
+  const { addToast, language } = useData();
   const router = useRouter();
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly');
   const [isProcessing, setIsProcessing] = useState(false);
+  const ii = t(language);
+  const features = getFeatures(ii);
+  const faqs = getFAQs(ii);
 
   const handleUpgrade = async (plan: string) => {
     if (isPremium) return;
@@ -175,10 +180,10 @@ export default function PricingPage() {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            Choose Your Plan
+            {ii.choosePlan}
           </motion.h1>
           <p style={{ color: '#9ca3af', fontSize: '1.1rem' }}>
-            Unlock the full power of AI business intelligence
+            {ii.unlockFullPower}
           </p>
 
           {/* Monthly/Yearly Toggle */}
@@ -199,7 +204,7 @@ export default function PricingPage() {
                 transition: 'color 0.2s',
               }}
             >
-              Monthly
+              {ii.monthly}
             </span>
             <button
               onClick={() => setBilling(billing === 'monthly' ? 'yearly' : 'monthly')}
@@ -239,7 +244,7 @@ export default function PricingPage() {
                 transition: 'color 0.2s',
               }}
             >
-              Yearly
+              {ii.yearly}
               <span
                 style={{
                   marginLeft: '0.5rem',
@@ -284,7 +289,7 @@ export default function PricingPage() {
               className="display-font"
               style={{ fontSize: '1.5rem', fontWeight: 700, color: 'white', marginBottom: '0.25rem' }}
             >
-              Free
+              {ii.free}
             </h2>
             <p style={{ color: '#9ca3af', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
               Perfect to get started
@@ -295,7 +300,7 @@ export default function PricingPage() {
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {FREE_FEATURES.map((f, i) => (
+              {features.free.map((f, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <span style={{ fontSize: '0.9rem' }}>{f.included ? '✅' : '❌'}</span>
                   <span
@@ -326,7 +331,7 @@ export default function PricingPage() {
                 cursor: 'default',
               }}
             >
-              {isPremium ? 'Free Plan' : '✓ Current Plan'}
+              {isPremium ? (ii.freePlan || 'Free Plan') : `✓ ${ii.currentPlanBtn || 'Current Plan'}`}
             </button>
           </motion.div>
 
@@ -366,7 +371,7 @@ export default function PricingPage() {
                   whiteSpace: 'nowrap',
                 }}
               >
-                MOST POPULAR 🔥
+                {ii.mostPopular}
               </span>
             </div>
 
@@ -374,17 +379,17 @@ export default function PricingPage() {
               className="display-font"
               style={{ fontSize: '1.5rem', fontWeight: 700, color: 'white', marginBottom: '0.25rem' }}
             >
-              Premium 👑
+              {ii.premium} 👑
             </h2>
             <p style={{ color: '#9ca3af', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-              For serious investors & CEOs
+              {ii.seriousInvestors}
             </p>
             <div style={{ marginBottom: '0.5rem' }}>
               <span style={{ fontSize: '2.5rem', fontWeight: 800, color: 'white' }}>
                 {billing === 'monthly' ? '₹299' : '₹2,499'}
               </span>
               <span style={{ fontSize: '1rem', color: '#6b7280', fontWeight: 400 }}>
-                /{billing === 'monthly' ? 'month' : 'year'}
+                {billing === 'monthly' ? ii.perMonth : ii.perYear}
               </span>
             </div>
             {billing === 'yearly' && (
@@ -396,13 +401,13 @@ export default function PricingPage() {
                   fontWeight: 600,
                 }}
               >
-                💰 You save ₹1,089/year!
+                {ii.saveAmount}
               </p>
             )}
             {billing === 'monthly' && <div style={{ height: '1.5rem' }} />}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {PREMIUM_FEATURES.map((f, i) => (
+              {features.premium.map((f, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <span style={{ fontSize: '0.9rem' }}>✅</span>
                   <span style={{ color: '#e5e7eb', fontSize: '0.875rem' }}>{f.text}</span>
@@ -446,13 +451,13 @@ export default function PricingPage() {
               }}
             >
               {isProcessing
-                ? '⏳ Processing...'
+                ? `⏳ ${ii.processing}`
                 : isPremium
-                  ? '✅ Current Plan'
-                  : 'Get Premium →'}
+                  ? `✅ ${ii.currentPlanBtn}`
+                  : ii.getPremium}
             </button>
             <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '0.75rem', marginTop: '0.75rem' }}>
-              Secure payment via Razorpay 🔒
+              {ii.securePayment}
             </p>
 
 
@@ -471,9 +476,9 @@ export default function PricingPage() {
               marginBottom: '2rem',
             }}
           >
-            Frequently Asked Questions
+            {ii.faqsTitle}
           </h2>
-          {FAQS.map((faq, i) => (
+          {faqs.map((faq, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 10 }}

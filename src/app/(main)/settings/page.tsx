@@ -11,6 +11,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useRouter } from "next/navigation";
 import { wipeUserHistory, getDailyBriefingHistory, restoreUserHistory } from "@/lib/firebaseClient";
 import SectionHeader from "@/components/SectionHeader";
+import { LANGUAGES, t } from "@/lib/i18n";
 
 import {
   DndContext,
@@ -82,8 +83,10 @@ export default function SettingsPage() {
     theme, toggleTheme, addToast, 
     widgets, setWidgets,
     fontDisplay, setFontDisplay,
-    fontBody, setFontBody
+    fontBody, setFontBody,
+    language, setLanguage
   } = useData();
+  const ii = t(language);
   const { user } = useAuth();
   const { isPremium, expiresAt, isLoading: subLoading } = useSubscription();
   const router = useRouter();
@@ -554,6 +557,30 @@ export default function SettingsPage() {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Language */}
+          <motion.div variants={itemVariants} className="md:col-span-2">
+            <GlassCard title={ii.language} icon={Globe}>
+              <p className="text-xs text-[var(--text-muted)] mb-4">{ii.selectLanguage}</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {LANGUAGES.map(lang => (
+                  <button
+                    key={lang.code}
+                    onClick={() => setLanguage(lang.code)}
+                    className={`flex items-center gap-3 p-4 rounded-xl border transition-all text-left ${language === lang.code ? 'border-[var(--accent-violet)] bg-[rgba(139,92,246,0.1)] shadow-[0_0_15px_rgba(139,92,246,0.15)]' : 'border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.05)]'}`}
+                  >
+                    <span style={{ fontSize: '1.5rem' }}>{lang.flag}</span>
+                    <div>
+                      <div className={`text-sm font-bold ${language === lang.code ? 'text-[var(--accent-violet-light)]' : 'text-[var(--text-primary)]'}`}>
+                        {lang.nativeName}
+                      </div>
+                      <div className="text-[10px] text-[var(--text-muted)]">{lang.name}</div>
+                    </div>
+                    {language === lang.code && <span className="ml-auto text-[var(--accent-violet-light)] text-lg">✓</span>}
+                  </button>
+                ))}
+              </div>
+            </GlassCard>
+          </motion.div>
           {/* Appearance */}
           <motion.div variants={itemVariants}>
             <GlassCard title="Appearance" icon={Monitor}>
