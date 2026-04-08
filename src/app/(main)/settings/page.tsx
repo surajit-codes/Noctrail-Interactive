@@ -841,15 +841,17 @@ export default function SettingsPage() {
 
               {/* Section 6 */}
               <TermsSection icon={Globe} number="6" title="Third-Party Services & APIs">
-                <p>BriefAI integrates with the following third-party services:</p>
+                <p>BriefAI integrates with the following third-party services to provide real-time intelligence and secure interactions:</p>
                 <ul>
-                  <li><strong className="text-white">Google Gemini API</strong> — AI-powered briefing generation and analysis</li>
-                  <li><strong className="text-white">Groq API (Llama Models)</strong> — Real-time AI chat assistant</li>
-                  <li><strong className="text-white">Yahoo Finance 2</strong> — Market data, stock prices, and financial metrics</li>
-                  <li><strong className="text-white">GNews API</strong> — Curated news articles and headlines</li>
-                  <li><strong className="text-white">Firebase (Google)</strong> — Authentication, database, and hosting</li>
+                  <li><strong className="text-white">Hugging Face Inference API</strong> — Primary AI engine using Llama-3 models for briefing generation and chat analysis.</li>
+                  <li><strong className="text-white">Yahoo Finance</strong> — Source for real-time market indices (NIFTY 50, SENSEX), stock quotes, and historical financial data.</li>
+                  <li><strong className="text-white">Alpha Vantage API</strong> — Macro-economic news sentiment analysis and real-time commodities/forex data (Gold, Crude Oil, USD/INR).</li>
+                  <li><strong className="text-white">GNews API</strong> — High-speed search and aggregation of latest business and financial news articles.</li>
+                  <li><strong className="text-white">Firebase (Google Cloud)</strong> — Secure user authentication, encrypted database storage for briefings, and cloud hosting infrastructure.</li>
+                  <li><strong className="text-white">Razorpay</strong> — Secure payment gateway for processing premium subscription upgrades and transactions.</li>
+                  <li><strong className="text-white">Resend</strong> — Automated transactional email infrastructure for delivering daily market intelligence reports.</li>
                 </ul>
-                <p>These services are governed by their own terms of service and privacy policies. We are not responsible for any downtime, data handling practices, or changes in third-party service availability.</p>
+                <p>These services are governed by their own respective terms of service and privacy policies. Noctrail Interactive is not responsible for any downtime, data handling practices, or changes in third-party service availability.</p>
               </TermsSection>
 
               {/* Section 7 */}
