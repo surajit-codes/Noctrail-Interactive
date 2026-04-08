@@ -6,7 +6,10 @@
     "start_url": "/?source=pwa",
     "scope": "/",
     "display": "standalone",
-    "display_override": ["window-controls-overlay", "standalone"],
+    "display_override": [
+        "window-controls-overlay",
+        "standalone"
+    ],
     "orientation": "portrait-primary",
     "background_color": "#000000",
     "theme_color": "#000000",
@@ -69,5 +72,46 @@
         }
     ],
     "prefer_related_applications": false,
-    "related_applications": []
+    "related_applications": [],
+    "file_handlers": [
+        {
+            "action": "/?file=%s",
+            "accept": {
+                "text/plain": [
+                    ".txt"
+                ],
+                "application/json": [
+                    ".json"
+                ]
+            }
+        }
+    ],
+    "launch_handler": {
+        "client_mode": "focus-existing"
+    },
+    "protocol_handlers": [
+        {
+            "protocol": "web+briefai",
+            "url": "/?url=%s"
+        }
+    ],
+    "share_target": {
+        "action": "/?share=true",
+        "method": "GET",
+        "enctype": "application/x-www-form-urlencoded",
+        "params": {
+            "title": "title",
+            "text": "text",
+            "url": "url"
+        }
+    },
+    "iarc_rating_id": "",
+    "widgets": [],
+    "edge_side_panel": {
+        "preferred_width": 376
+    },
+    "note_taking": {
+        "new_note_url": "/?action=new-note"
+    },
+    "scope_extensions": []
 }
