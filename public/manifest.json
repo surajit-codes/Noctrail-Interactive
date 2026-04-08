@@ -1,6 +1,6 @@
 {
-    "name": "Noctrail-Interactive",
-    "short_name": "Noctrail",
+    "name": "BriefAI",
+    "short_name": "BriefAI",
     "description": "AI-powered CEO Morning Briefing Platform for Indian executives",
     "start_url": "/",
     "display": "standalone",
@@ -8,9 +8,11 @@
     "theme_color": "#000000",
     "orientation": "portrait-primary",
     "scope": "/",
-    "icons": [{
-        "src": "/logo.svg",
-        "sizes": "any",
-        "type": "image/svg+xml"
-    }]
+    "icons": [
+        {
+            "src": "/logo.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        }
+    ]
 }
