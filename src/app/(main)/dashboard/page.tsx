@@ -97,7 +97,7 @@ export default function DashboardPage() {
   
   const niftyPrice = marketData?.nifty?.current_price;
   const niftyStart = niftyData.length > 1 ? niftyData[0].close : undefined;
-  const niftyChangePct = niftyPrice && niftyStart ? ((niftyPrice - niftyStart) / niftyStart) * 100 : null;
+  const niftyChangePct = marketData?.nifty?.change_percent !== undefined ? marketData.nifty.change_percent : (niftyPrice && niftyStart ? ((niftyPrice - niftyStart) / niftyStart) * 100 : null);
   const niftyIsUp = (niftyChangePct ?? 0) >= 0;
 
   return (

@@ -68,6 +68,10 @@ export async function GET() {
 
     const niftyHistorical = ((niftyRaw?.quotes ?? []) as unknown[]).filter(isChartQuoteWithClose);
 
+    // For current price accuracy, use yf.quote
+    const niftyLive = await yf.quote("^NSEI");
+    const nl = niftyLive as Record<string, any>;
+
     results.nifty = {
       symbol: "^NSEI",
       name: "NIFTY 50",
@@ -78,10 +82,12 @@ export async function GET() {
         low: (d as any).low ?? d.close,
         close: d.close,
       })),
-      current_price: niftyHistorical[niftyHistorical.length - 1]?.close ?? null,
+      current_price: nl.regularMarketPrice ?? niftyHistorical[niftyHistorical.length - 1]?.close ?? null,
+      change_percent: nl.regularMarketChangePercent ?? null,
+      daily_change: nl.regularMarketChange ?? null,
     };
   } catch (err) {
-    errors.push("NIFTY historical: " + String(err));
+    errors.push("NIFTY historical/quote: " + String(err));
     results.nifty = { error: "Data Unavailable" };
   }
 
@@ -98,6 +104,9 @@ export async function GET() {
     });
     const sensexHistorical = ((sensexRaw?.quotes ?? []) as unknown[]).filter(isChartQuoteWithClose);
 
+    const sensexLive = await yf.quote("^BSESN");
+    const sl = sensexLive as Record<string, any>;
+
     results.sensex = {
       symbol: "^BSESN",
       name: "BSE SENSEX",
@@ -108,10 +117,12 @@ export async function GET() {
         low: (d as any).low ?? d.close,
         close: d.close,
       })),
-      current_price: sensexHistorical[sensexHistorical.length - 1]?.close ?? null,
+      current_price: sl.regularMarketPrice ?? sensexHistorical[sensexHistorical.length - 1]?.close ?? null,
+      change_percent: sl.regularMarketChangePercent ?? null,
+      daily_change: sl.regularMarketChange ?? null,
     };
   } catch (err) {
-    errors.push("SENSEX historical: " + String(err));
+    errors.push("SENSEX historical/quote: " + String(err));
     results.sensex = { error: "Data Unavailable" };
   }
 

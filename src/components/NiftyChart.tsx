@@ -252,7 +252,7 @@ export default function NiftyChart({ data, name = "NIFTY 50", mode = "line", onM
   const i = t(language);
   const chartName = name === "NIFTY 50" ? i.nifty50 : name === "SENSEX" ? i.sensexLabel : name;
   const gradientId = `grad-${chartName.replace(/\s/g, "")}`;
-  const isPositive = data.length >= 2 && data[data.length - 1].close >= data[0].close;
+  const isPositive = data.length >= 2 ? data[data.length - 1].close >= data[data.length - 2].close : true;
   const chartColor = isPositive ? "#10b981" : "#ef4444";
 
   const formattedData = data.map((d) => ({
