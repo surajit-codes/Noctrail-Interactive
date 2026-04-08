@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import type { BriefingData, DailyBriefing } from "@/lib/briefingTypes";
-import { getDailyBriefingHistory, getLatestDailyBriefing } from "@/lib/firebaseClient";
+import { getDailyBriefingHistory, getLatestDailyBriefing, getUserPreferences, saveUserPreferences } from "@/lib/firebaseClient";
 import { useAuth } from "./AuthContext";
 import type { Language } from "@/lib/i18n";
 
@@ -85,7 +85,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [notifStatus, setNotifStatus] = useState<"idle" | "loading" | "enabled" | "denied">("idle");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setSidebarCollapsedState] = useState(false);
   const [widgets, setWidgetsState] = useState<WidgetConfig[]>(DEFAULT_WIDGETS);
   const [fontDisplay, setFontDisplayState] = useState("Syne");
   const [fontBody, setFontBodyState] = useState("Inter");
@@ -132,35 +132,46 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     setWidgetsState(prev => {
       const resolved = typeof newWidgets === 'function' ? newWidgets(prev) : newWidgets;
       localStorage.setItem("dashboardWidgets", JSON.stringify(resolved));
+      if (user) saveUserPreferences(user.uid, { widgets: resolved });
       return resolved;
     });
-  }, []);
+  }, [user]);
 
   const setFontDisplay = useCallback((font: string) => {
     setFontDisplayState(font);
     localStorage.setItem("fontDisplay", font);
     document.documentElement.style.setProperty('--font-display', font);
-  }, []);
+    if (user) saveUserPreferences(user.uid, { fontDisplay: font });
+  }, [user]);
 
   const setFontBody = useCallback((font: string) => {
     setFontBodyState(font);
     localStorage.setItem("fontBody", font);
     document.documentElement.style.setProperty('--font-body', font);
-  }, []);
+    if (user) saveUserPreferences(user.uid, { fontBody: font });
+  }, [user]);
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem("language", lang);
-  }, []);
+    if (user) saveUserPreferences(user.uid, { language: lang });
+  }, [user]);
 
   const toggleTheme = useCallback(() => {
     setTheme(prev => {
       const newTheme = prev === "dark" ? "light" : "dark";
       document.documentElement.setAttribute('data-theme', newTheme);
       localStorage.setItem("theme", newTheme);
+      if (user) saveUserPreferences(user.uid, { theme: newTheme });
       return newTheme;
     });
-  }, []);
+  }, [user]);
+
+  const setSidebarCollapsed = useCallback((collapsed: boolean) => {
+    setSidebarCollapsedState(collapsed);
+    localStorage.setItem("sidebarCollapsed", String(collapsed));
+    if (user) saveUserPreferences(user.uid, { isSidebarCollapsed: collapsed });
+  }, [user]);
 
   const addToast = useCallback((message: string, type: Toast["type"] = "info") => {
     const id = Math.random().toString(36).slice(2);
@@ -179,6 +190,60 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       if (latest) setBriefing(latest);
     } catch (err) {
       console.warn("Failed to fetch briefing:", err);
+    }
+  }, [user]);
+
+  const fetchUserPreferences = useCallback(async () => {
+    if (!user) return;
+    try {
+      const prefs = await getUserPreferences(user.uid);
+      if (prefs) {
+        if (prefs.theme) {
+          setTheme(prefs.theme);
+          document.documentElement.setAttribute('data-theme', prefs.theme);
+          localStorage.setItem("theme", prefs.theme);
+        }
+        if (prefs.language) {
+          setLanguageState(prefs.language as any);
+          localStorage.setItem("language", prefs.language);
+        }
+        if (prefs.fontDisplay) {
+          setFontDisplayState(prefs.fontDisplay);
+          document.documentElement.style.setProperty('--font-display', prefs.fontDisplay);
+          localStorage.setItem("fontDisplay", prefs.fontDisplay);
+        }
+        if (prefs.fontBody) {
+          setFontBodyState(prefs.fontBody);
+          document.documentElement.style.setProperty('--font-body', prefs.fontBody);
+          localStorage.setItem("fontBody", prefs.fontBody);
+        }
+        if (prefs.widgets) {
+          setWidgetsState(prefs.widgets);
+          localStorage.setItem("dashboardWidgets", JSON.stringify(prefs.widgets));
+        }
+        if (prefs.isSidebarCollapsed !== undefined) {
+          setSidebarCollapsedState(prefs.isSidebarCollapsed);
+          localStorage.setItem("sidebarCollapsed", String(prefs.isSidebarCollapsed));
+        }
+      } else {
+        // Migration: If no prefs in Firestore, but they exist locally, upload them
+        const localTheme = localStorage.getItem("theme");
+        const localLang = localStorage.getItem("language");
+        const localWidgets = localStorage.getItem("dashboardWidgets");
+        
+        if (localTheme || localLang || localWidgets) {
+          saveUserPreferences(user.uid, {
+            theme: localTheme as any,
+            language: localLang as any,
+            widgets: localWidgets ? JSON.parse(localWidgets) : undefined,
+            isSidebarCollapsed: localStorage.getItem("sidebarCollapsed") === "true",
+            fontDisplay: localStorage.getItem("fontDisplay") || undefined,
+            fontBody: localStorage.getItem("fontBody") || undefined,
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch user preferences:", err);
     }
   }, [user]);
 
@@ -207,7 +272,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!user) return; // Only fetch data if logged in
     const init = async () => {
-      await Promise.allSettled([fetchBriefing(), fetchHistory(), fetchMarketData()]);
+      await Promise.allSettled([fetchBriefing(), fetchHistory(), fetchMarketData(), fetchUserPreferences()]);
       setLoading(false);
     };
     init();

@@ -275,3 +275,28 @@ export async function deleteChatThread(userId: string, threadId: string): Promis
   await deleteDoc(docRef);
 }
 
+// ─── User Preferences ──────────────────────────────────────────────
+
+export interface UserPreferences {
+  theme?: "dark" | "light";
+  language?: string;
+  fontDisplay?: string;
+  fontBody?: string;
+  widgets?: any[];
+  isSidebarCollapsed?: boolean;
+  updated_at?: string;
+}
+
+export async function getUserPreferences(uid: string): Promise<UserPreferences | null> {
+  const db = getDb();
+  const docRef = doc(db, "users", uid, "data", "preferences");
+  const snap = await getDocFromServer(docRef); // Always get fresh data
+  if (!snap.exists()) return null;
+  return snap.data() as UserPreferences;
+}
+
+export async function saveUserPreferences(uid: string, prefs: Partial<UserPreferences>): Promise<void> {
+  const db = getDb();
+  const docRef = doc(db, "users", uid, "data", "preferences");
+  await setDoc(docRef, { ...prefs, updated_at: new Date().toISOString() }, { merge: true });
+}
