@@ -6,6 +6,7 @@ import AnimatedGrid from "@/components/AnimatedGrid";
 import LoadingSkeleton from "@/components/LoadingSkeleton";
 import { useData } from "@/context/DataContext";
 import { ExternalLink, Newspaper, BrainCircuit, Loader2 } from "lucide-react";
+import { isValidUrl } from "@/lib/utils";
 
 const containerVariants = {
   hidden: {},
@@ -23,9 +24,10 @@ function NewsCard({
   insight, 
   date, 
   tag,
-  tagColor = "var(--accent-violet)" 
+  tagColor = "var(--accent-violet)",
+  url
 }: { 
-  headline: string, source: string, insight: string, date?: string, tag: string, tagColor?: string 
+  headline: string, source: string, insight: string, date?: string, tag: string, tagColor?: string, url?: string 
 }) {
   return (
     <div className="group glass-card p-5 h-full flex flex-col hover:bg-[rgba(255,255,255,0.06)] transition-all">
@@ -50,9 +52,16 @@ function NewsCard({
           <span className="text-[10px] font-semibold text-[var(--text-secondary)] uppercase">{source}</span>
         </div>
         
-        <button className="flex items-center gap-1 text-[10px] font-semibold text-[var(--accent-violet-light)] group-hover:underline">
-          Read Story <ExternalLink size={10} />
-        </button>
+        {isValidUrl(url) && (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-[10px] font-semibold text-[var(--accent-violet-light)] group-hover:underline"
+          >
+            Read Story <ExternalLink size={10} />
+          </a>
+        )}
       </div>
     </div>
   );
@@ -88,7 +97,8 @@ export default function NewsPage() {
     source: "BriefAI Engine",
     insight: opp.description,
     tag: opp.urgency,
-    tagColor: opp.urgency === "HIGH" ? "#10b981" : opp.urgency === "MEDIUM" ? "#f59e0b" : "#8b5cf6"
+    tagColor: opp.urgency === "HIGH" ? "#10b981" : opp.urgency === "MEDIUM" ? "#f59e0b" : "#8b5cf6",
+    url: opp.url
   }));
 
   const worldNews = briefing.world_impact.key_events.map(event => ({
@@ -97,7 +107,8 @@ export default function NewsPage() {
     source: "Global Sweep",
     insight: "Automated analysis of global macroeconomic conditions affecting this sector.",
     tag: event.impact,
-    tagColor: event.impact === "POSITIVE" ? "#10b981" : event.impact === "NEGATIVE" ? "#ef4444" : "#06b6d4"
+    tagColor: event.impact === "POSITIVE" ? "#10b981" : event.impact === "NEGATIVE" ? "#ef4444" : "#06b6d4",
+    url: event.url
   }));
 
   const vcNews = briefing.vc_funding_highlights.map(vc => ({
@@ -106,7 +117,8 @@ export default function NewsPage() {
     source: "Venture Scanner",
     insight: vc.insight,
     tag: vc.sector,
-    tagColor: "#a78bfa" // Let's use light violet for all sectors
+    tagColor: "#a78bfa", // Let's use light violet for all sectors
+    url: vc.url
   }));
 
   return (

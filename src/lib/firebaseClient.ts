@@ -235,3 +235,43 @@ export async function updateUserPortfolio(uid: string, items: PortfolioItem[]): 
   await setDoc(docRef, { items, updated_at: new Date().toISOString() }, { merge: true });
 }
 
+// ─── Chat History ──────────────────────────────────────────────────
+
+export interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  isLimitMessage?: boolean;
+}
+
+export interface ChatThread {
+  id: string;
+  title: string;
+  updatedAt: string;
+  messages: Message[];
+}
+
+export async function getChatThreads(userId: string): Promise<ChatThread[]> {
+  const db = getDb();
+  const q = query(
+    collection(db, "users", userId, "chat_threads"),
+    orderBy("updatedAt", "desc"),
+    limit(50)
+  );
+
+  const snap = await getDocsFromServer(q);
+  return snap.docs.map(doc => doc.data() as ChatThread);
+}
+
+export async function saveChatThread(userId: string, thread: ChatThread): Promise<void> {
+  const db = getDb();
+  const docRef = doc(db, "users", userId, "chat_threads", thread.id);
+  await setDoc(docRef, thread, { merge: true });
+}
+
+export async function deleteChatThread(userId: string, threadId: string): Promise<void> {
+  const db = getDb();
+  const docRef = doc(db, "users", userId, "chat_threads", threadId);
+  await deleteDoc(docRef);
+}
+

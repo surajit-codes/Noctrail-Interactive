@@ -19,6 +19,7 @@ import type { BriefingData } from "@/lib/briefingTypes";
 import { useData, WidgetConfig } from "@/context/DataContext";
 import { useAuth } from "@/context/AuthContext";
 import { getAllDailyBriefingDates, getDailyBriefingByDate } from "@/lib/firebaseClient";
+import { isValidUrl } from "@/lib/utils";
 
 const containerVariants: Variants = {
   hidden: {},
@@ -217,7 +218,7 @@ export default function BriefingPage() {
                     <p className="text-base leading-relaxed" style={{ color: "var(--text-primary)" }}>
                       {briefing.executive_summary}
                     </p>
-                    {briefing.executive_summary_url && (
+                    {isValidUrl(briefing.executive_summary_url) && (
                       <a 
                         href={briefing.executive_summary_url} 
                         target="_blank" 
@@ -313,7 +314,7 @@ export default function BriefingPage() {
                           <span className="text-xs" style={{ color: "var(--text-muted)" }}>Momentum:</span>
                           <SignalBadge value={s.momentum} />
                         </div>
-                        {s.url && (
+                        {isValidUrl(s.url) && (
                           <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-xs mt-2 flex items-center gap-1 hover:text-[var(--accent-purple)] transition-colors" style={{ color: "var(--text-muted)" }}>
                             <ExternalLink size={10} /> Read Story
                           </a>
@@ -340,7 +341,7 @@ export default function BriefingPage() {
                         <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{opp.description}</p>
                         <div className="flex items-center justify-between gap-4 mt-2">
                           <div className="text-xs p-2 rounded-lg flex-1" style={{ background: "rgba(0,212,255,0.08)", color: "var(--accent-cyan)" }}>⚡ {opp.action}</div>
-                          {opp.url && (
+                          {isValidUrl(opp.url) && (
                             <a href={opp.url} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg border border-[var(--text-muted)] border-opacity-20 hover:bg-[var(--accent-cyan)] hover:bg-opacity-10 transition-colors" title="Read Story">
                               <ExternalLink size={12} style={{ color: "var(--text-muted)" }} />
                             </a>
@@ -364,7 +365,7 @@ export default function BriefingPage() {
                         <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{alert.description}</p>
                         <div className="flex items-center justify-between gap-4 mt-2">
                           <div className="text-xs p-2 rounded-lg flex-1" style={{ background: "rgba(245,158,11,0.08)", color: "#f59e0b" }}>🛡️ {alert.mitigation}</div>
-                          {alert.url && (
+                          {isValidUrl(alert.url) && (
                             <a href={alert.url} target="_blank" rel="noopener noreferrer" className="p-2 rounded-lg border border-[var(--text-muted)] border-opacity-20 hover:bg-[#f59e0b] hover:bg-opacity-10 transition-colors" title="Read Story">
                               <ExternalLink size={12} style={{ color: "var(--text-muted)" }} />
                             </a>
@@ -393,7 +394,7 @@ export default function BriefingPage() {
                             </div>
                             <span className="text-xs px-2 py-0.5 rounded-full inline-block" style={{ background: "rgba(139,92,246,0.15)", color: "var(--accent-purple)" }}>{vc.sector}</span>
                             <p className="text-xs leading-relaxed" style={{ color: "var(--text-muted)" }}>{vc.insight}</p>
-                            {vc.url && (
+                            {isValidUrl(vc.url) && (
                               <a href={vc.url} target="_blank" rel="noopener noreferrer" className="text-xs mt-1 flex items-center gap-1 hover:text-[var(--accent-purple)] transition-colors" style={{ color: "var(--text-muted)" }}>
                                 <ExternalLink size={10} /> Read Story
                               </a>
@@ -421,7 +422,7 @@ export default function BriefingPage() {
                               <p className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>{ev.event}</p>
                               <div className="flex items-center justify-between mt-1">
                                 <span className="text-xs" style={{ color: ev.impact === "POSITIVE" ? "#10b981" : ev.impact === "NEGATIVE" ? "#ef4444" : "#f59e0b" }}>{ev.impact}</span>
-                                {ev.url && (
+                                {isValidUrl(ev.url) && (
                                   <a href={ev.url} target="_blank" rel="noopener noreferrer" title="Read Story">
                                     <ExternalLink size={10} style={{ color: "var(--text-muted)" }} />
                                   </a>

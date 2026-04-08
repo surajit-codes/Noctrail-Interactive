@@ -6,14 +6,8 @@ import { useData } from "@/context/DataContext";
 import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useRouter } from "next/navigation";
-import { BrainCircuit, Send, Trash2, User, Sparkles, Crown } from "lucide-react";
-
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  isLimitMessage?: boolean;
-}
+import { BrainCircuit, Send, Trash2, User, Sparkles, Crown, MessageSquarePlus, MessageSquare, Menu, X, Lock } from "lucide-react";
+import { Message, ChatThread, getChatThreads, saveChatThread, deleteChatThread } from "@/lib/firebaseClient";
 
 const INITIAL_MESSAGES: Message[] = [
   {
@@ -43,31 +37,43 @@ export default function ChatPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load chat history
-  useEffect(() => {
-    if (user?.uid) {
-      const saved = localStorage.getItem(`briefai_chat_${user.uid}`);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setMessages(parsed);
-          }
-        } catch (e) {
-          console.error("Failed to load chat history:", e);
-        }
-      }
-    }
-  }, [user?.uid]);
+  const [threads, setThreads] = useState<ChatThread[]>([]);
+  const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Save chat history
+  // Load chat history from Firebase
   useEffect(() => {
-    if (user?.uid && messages !== INITIAL_MESSAGES) {
-      if (messages.length > 1) {
-        localStorage.setItem(`briefai_chat_${user.uid}`, JSON.stringify(messages));
-      }
+    if (user?.uid && isPremium) {
+      getChatThreads(user.uid).then(t => setThreads(t)).catch(console.error);
     }
-  }, [messages, user?.uid]);
+  }, [user?.uid, isPremium]);
+
+  const loadThread = (thread: ChatThread) => {
+    setMessages(thread.messages);
+    setCurrentThreadId(thread.id);
+    if (window.innerWidth < 1024) setIsSidebarOpen(false);
+  };
+
+  const deleteThread = async (id: string) => {
+    if (!user?.uid) return;
+    try {
+      await deleteChatThread(user.uid, id);
+      setThreads(prev => prev.filter(t => t.id !== id));
+      if (currentThreadId === id) {
+        setMessages(INITIAL_MESSAGES);
+        setCurrentThreadId(null);
+      }
+    } catch (e) {
+      console.error("Failed to delete thread", e);
+    }
+  };
+
+  const startNewChat = () => {
+    setMessages(INITIAL_MESSAGES);
+    setCurrentThreadId(null);
+    setInput("");
+    if (window.innerWidth < 1024) setIsSidebarOpen(false);
+  };
 
   // Auto-scroll to bottom of chat
   useEffect(() => {
@@ -91,6 +97,7 @@ export default function ChatPage() {
       content: m.content,
     }));
 
+    let assistantText = "";
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -122,7 +129,6 @@ export default function ChatPage() {
 
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
-      let assistantText = "";
 
       const assistantId = Date.now().toString() + "-ai";
       setMessages((prev) => [...prev, { id: assistantId, role: "assistant", content: "" }]);
@@ -163,15 +169,42 @@ export default function ChatPage() {
       }
     } catch (err: any) {
       console.error("Chat message error:", err);
+      assistantText = `❌ **Error:** ${err.message || "I encountered an issue processing your request. Please check your internet connection or try again later."}`;
       setMessages((prev) => [
         ...prev,
-        {
-          id: Date.now().toString() + "-err",
-          role: "assistant",
-          content: `❌ **Error:** ${err.message || "I encountered an issue processing your request. Please check your internet connection or try again later."}`,
-        },
+        { id: Date.now().toString() + "-err", role: "assistant", content: assistantText },
       ]);
     } finally {
+      if (user?.uid && isPremium && assistantText) {
+        const isNew = !currentThreadId;
+        const threadId = currentThreadId || Date.now().toString();
+        
+        const generateTitle = (text: string) => {
+          const words = text.split(" ");
+          return words.slice(0, 5).join(" ") + (words.length > 5 ? "..." : "");
+        };
+
+        const finalAssistantMsg: Message = { id: Date.now().toString() + "-ai", role: "assistant", content: assistantText };
+        const newThreadState = [...messages, userMsg, finalAssistantMsg];
+        const title = isNew ? generateTitle(trimmed) : (threads.find(t => t.id === threadId)?.title || "Chat");
+        
+        const threadToSave: ChatThread = {
+          id: threadId,
+          title,
+          updatedAt: new Date().toISOString(),
+          messages: newThreadState
+        };
+        
+        saveChatThread(user.uid, threadToSave).catch(console.error);
+        
+        if (isNew) {
+          setCurrentThreadId(threadId);
+          setThreads(prev => [threadToSave, ...prev]);
+        } else {
+          setThreads(prev => prev.map(t => t.id === threadId ? threadToSave : t));
+        }
+      }
+
       setIsLoading(false);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
@@ -193,26 +226,101 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="relative flex-1 flex flex-col min-h-0">
-      <AnimatedGrid />
-      
-      <div className="relative z-10 flex flex-col h-full max-w-4xl mx-auto w-full pt-4 px-4 sm:px-6">
+    <div className="relative flex-1 flex min-h-0 overflow-hidden bg-[var(--bg-primary)]">
+      {/* SIDEBAR */}
+      <div className={`fixed inset-y-0 left-0 lg:static z-40 w-72 lg:w-64 shrink-0 flex flex-col transition-transform duration-300 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} border-r border-[var(--border-subtle)]`}>
+        {/* Sidebar Background */}
+        <div className="absolute inset-0 bg-[rgba(13,13,22,0.95)] backdrop-blur-2xl -z-10" />
+        
         {/* Header */}
-        <div
-          className="flex items-center justify-between px-5 py-4 rounded-t-2xl border-x border-t border-[rgba(139,92,246,0.2)]"
-          style={{
-            background: "rgba(13,13,22,0.85)",
-            backdropFilter: "blur(20px)",
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
-              style={{
-                background: "linear-gradient(135deg, rgba(139,92,246,0.3), rgba(109,40,217,0.2))",
-                border: "1px solid rgba(139,92,246,0.4)",
-              }}
-            >
+        <div className="p-4 border-b border-[var(--border-subtle)] flex items-center justify-between">
+          <h3 className="font-bold text-xs text-[var(--accent-violet-light)] tracking-wider uppercase">Chat History</h3>
+          <button className="lg:hidden p-1.5 text-[var(--text-muted)] hover:text-white transition-colors" onClick={() => setIsSidebarOpen(false)}>
+            <X size={18} />
+          </button>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-3 space-y-2 relative">
+           {!isPremium ? (
+             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 text-center bg-black/40 backdrop-blur-sm">
+               <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center mb-3 text-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                 <Lock size={24} />
+               </div>
+               <h4 className="font-bold text-sm text-white mb-2">Cloud Sync Locked</h4>
+               <p className="text-[11px] text-[var(--text-muted)] leading-relaxed mb-4">Upgrade to Premium to instantly save, load, and resume all your previous AI strategy sessions.</p>
+               <button onClick={() => router.push("/pricing")} className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 rounded-lg text-xs font-bold text-black shadow-lg shadow-amber-500/20 w-full hover:scale-105 transition-transform">
+                 Unlock Premium
+               </button>
+             </div>
+           ) : (
+             <>
+               <button onClick={startNewChat} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg border border-dashed border-[var(--border-subtle)] hover:bg-[rgba(255,255,255,0.05)] transition-colors text-sm text-[var(--text-primary)]">
+                 <MessageSquarePlus size={16} /> New Chat
+               </button>
+               <div className="pt-2 space-y-1.5">
+                 {threads.map(t => (
+                   <div key={t.id} className="group relative flex items-center">
+                     <button 
+                       onClick={() => loadThread(t)} 
+                       className={`w-full flex items-center gap-2 text-left px-3 py-2 text-[13px] rounded-lg transition-colors ${currentThreadId === t.id ? 'bg-[rgba(139,92,246,0.15)] text-[var(--accent-violet-light)] font-medium' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.05)]'}`}
+                     >
+                       <MessageSquare size={14} className={`flex-shrink-0 ${currentThreadId === t.id ? 'text-[var(--accent-violet-light)]' : 'opacity-60'}`} />
+                       <span className="truncate flex-1">{t.title}</span>
+                     </button>
+                     <button 
+                       onClick={(e) => { e.stopPropagation(); deleteThread(t.id); }} 
+                       className="absolute right-1 opacity-0 group-hover:opacity-100 p-1.5 text-red-400 hover:bg-red-400/10 rounded-md transition-all"
+                     >
+                       <Trash2 size={13} />
+                     </button>
+                   </div>
+                 ))}
+                 {threads.length === 0 && (
+                   <div className="text-center py-8 text-[11px] text-[var(--text-muted)] italic">
+                     No previous chats found.
+                   </div>
+                 )}
+               </div>
+             </>
+           )}
+        </div>
+      </div>
+
+      {/* OVERLAY */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-30 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* MAIN CHAT AREA */}
+      <div className="relative flex-1 flex flex-col min-h-0 bg-[var(--bg-primary)]">
+        <AnimatedGrid />
+        
+        <div className="relative z-10 flex flex-col h-full max-w-4xl mx-auto w-full pt-4 px-4 sm:px-6">
+          {/* Header */}
+          <div
+            className="flex items-center justify-between px-5 py-4 rounded-t-2xl border-x border-t border-[rgba(139,92,246,0.2)]"
+            style={{
+              background: "rgba(13,13,22,0.85)",
+              backdropFilter: "blur(20px)",
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <button 
+                className="lg:hidden p-1.5 -ml-2 text-[var(--text-muted)] hover:text-white transition-colors"
+                onClick={() => setIsSidebarOpen(true)}
+              >
+                <Menu size={20} />
+              </button>
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+                style={{
+                  background: "linear-gradient(135deg, rgba(139,92,246,0.3), rgba(109,40,217,0.2))",
+                  border: "1px solid rgba(139,92,246,0.4)",
+                }}
+              >
               <BrainCircuit size={20} className="text-[var(--accent-violet-light)]" />
             </div>
             <div>
@@ -403,6 +511,7 @@ export default function ChatPage() {
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
