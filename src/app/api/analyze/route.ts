@@ -268,15 +268,22 @@ export async function POST(request: NextRequest) {
       };
     } else if (isCron) {
       // 8 AM Cron: Send to all users
-      getAllUsers().then(users => {
-        users.forEach(u => {
-          sendBriefingEmail(u.email, briefing, u.name).catch(e => console.warn(`Cron email to ${u.email} failed:`, e));
-        });
-      }).catch(e => console.error("Failed to fetch users for cron emails:", e));
+      try {
+        const users = await getAllUsers();
+        await Promise.all(
+          users.map((u) =>
+            sendBriefingEmail(u.email, briefing, u.name).catch((e) =>
+              console.warn(`Cron email to ${u.email} failed:`, e)
+            )
+          )
+        );
+      } catch (e) {
+        console.error("Failed to fetch users for cron emails:", e);
+      }
     }
 
-    // 5. Trigger push notifications (fire and forget)
-    fetch(`${baseUrl}/api/push/send`, {
+    // 5. Trigger push notifications (await it so Vercel doesn't kill the process)
+    await fetch(`${baseUrl}/api/push/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

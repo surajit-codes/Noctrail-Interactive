@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     // Configure VAPID per-request so invalid placeholders don't crash builds/module evaluation.
     try {
       webpush.setVapidDetails(
-        "mailto:admin@briefai.app",
+        process.env.VAPID_SUBJECT || "mailto:admin@briefai.app",
         VAPID_PUBLIC_KEY,
         VAPID_PRIVATE_KEY
       );
