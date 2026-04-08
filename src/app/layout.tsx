@@ -10,8 +10,14 @@ export const metadata: Metadata = {
     "AI-powered business intelligence that gives Indian CEOs everything they need every morning to make smart decisions.",
   keywords: ["BriefAI", "CEO briefing", "business intelligence", "Indian markets", "NIFTY", "AI analysis"],
   icons: {
-    icon: "/logo.svg",
-    apple: "/logo.svg",
+    icon: [
+      { url: "/logo.svg", type: "image/svg+xml" },
+      { url: "/logo.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [
+      { url: "/logo.png", sizes: "192x192", type: "image/png" },
+      { url: "/logo2.png", sizes: "512x512", type: "image/png" },
+    ],
   },
   openGraph: {
     title: "BriefAI — CEO Morning Briefing Platform",
