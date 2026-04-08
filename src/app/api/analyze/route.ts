@@ -209,17 +209,13 @@ export async function POST(request: NextRequest) {
 
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
-
     let briefing: BriefingData;
     try {
       briefing = JSON.parse(responseText);
-    } catch {
-      // LLMs like Llama-3 sometimes wrap JSON in markdown block OR add leading/trailing text
-      // Let's try to extract via markdown first:
+    } catch (err: any) {
       const jsonMatch = responseText.match(/```(?:json)?\n?([\s\S]*?)\n?```/);
       let extracted = jsonMatch ? jsonMatch[1] : responseText;
       
-      // If still failing or no markdown, aggressively find the first '{' and last '}'
       const firstBrace = extracted.indexOf("{");
       const lastBrace = extracted.lastIndexOf("}");
       
@@ -227,11 +223,13 @@ export async function POST(request: NextRequest) {
         extracted = extracted.substring(firstBrace, lastBrace + 1);
         try {
           briefing = JSON.parse(extracted);
-        } catch (innerErr) {
-          throw new Error("Failed to parse extracted JSON: " + extracted.substring(0, 200) + "...");
+        } catch (innerErr: any) {
+          console.error("FULL JSON THAT FAILED TO PARSE:", extracted);
+          throw new Error("Failed to parse extracted JSON. Parse Error: " + innerErr.message);
         }
       } else {
-        throw new Error("Failed to locate JSON object in response: " + responseText.substring(0, 200));
+        console.error("FULL RAW RESPONSE TEXT:", responseText);
+        throw new Error("Failed to locate JSON object in response text.");
       }
     }
 
